@@ -1,0 +1,12 @@
+{
+  "name": "the-dutchy-finch",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Antiques with soul. A lightweight website for The Dutchy Finch, Canberra.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
