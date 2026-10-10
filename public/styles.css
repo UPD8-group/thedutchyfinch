@@ -54,7 +54,7 @@ body[data-colour='mono']{background:#eeeeea}
 body[data-colour='mono'] [data-colour-wash]{filter:grayscale(1)}
 body[data-colour='colour']:is([data-intro='playing'],[data-intro='paused']){animation:paper-bloom 2.7s ease both}
 body[data-colour='colour']:is([data-intro='playing'],[data-intro='paused']) [data-colour-wash]{animation:colour-bloom 2.7s ease both}
-body[data-intro='paused'],body[data-intro='paused'] [data-colour-wash]{animation-play-state:paused}
+body[data-colour='colour'][data-intro='paused'],body[data-colour='colour'][data-intro='paused'] [data-colour-wash]{animation-play-state:paused}
 @keyframes paper-bloom{from{background:#eeeeea}to{background:var(--paper)}}
 @keyframes colour-bloom{from{filter:grayscale(1)}to{filter:grayscale(0)}}
 
