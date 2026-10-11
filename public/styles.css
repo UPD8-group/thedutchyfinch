@@ -24,7 +24,9 @@ p{margin-bottom:20px}
 ::selection{background:#d6c8a6;color:#26352b}
 [hidden]{display:none!important}
 html[data-intro-pending='true'] #hero-poster{visibility:hidden}
-html[data-intro-pending='true'] .hero-artwork{background:#deded7}
+html[data-intro-pending='true'] body{background:#eeeeea}
+html[data-intro-pending='true'] .hero-artwork{background:#deded7 url('/assets/finch-opening-900.webp') center/contain no-repeat}
+@media(min-width:701px){html[data-intro-pending='true'] .hero-artwork{background-image:url('/assets/finch-opening-1600.webp')}}
 html[data-intro-pending='true'] [data-colour-wash]{filter:grayscale(1);transition:none}
 html:not(.js-enabled) #menu-toggle,html:not(.js-enabled) .animation-controls,html:not(.js-enabled) #map-load,html:not(.js-enabled) #copy-address{display:none}
 html:not(.js-enabled) #site-nav{display:flex}

@@ -72,7 +72,6 @@
       return;
     }
 
-    const SESSION_KEY = 'dutchy-finch-intro-v1';
     const COLOUR_CUE = 3.4;
     const LOAD_TIMEOUT = 12000;
     const narrowScreen = window.matchMedia('(max-width: 700px)');
@@ -89,6 +88,10 @@
     let operation = 0;
     let timeout = 0;
     let animationFrame = 0;
+    let awaitingArrival = false;
+    let resumeWhenVisible = false;
+
+    const allowsAutoplay = () => !reducedMotion.matches && !(connection && connection.saveData);
 
     video.muted = true;
     video.defaultMuted = true;
@@ -132,10 +135,11 @@
       state = nextState;
       body.dataset.intro = nextState;
       const action = nextState === 'playing' ? 'Pause animation'
-        : nextState === 'paused' ? 'Resume animation' : 'Replay animation';
+        : nextState === 'paused' ? 'Resume animation'
+        : nextState === 'waiting' ? 'Play animation' : 'Replay animation';
       label.textContent = action;
       toggle.setAttribute('aria-label', action);
-      if (skip) skip.hidden = nextState !== 'playing' && nextState !== 'paused';
+      if (skip) skip.hidden = !['playing', 'paused', 'waiting'].includes(nextState);
     }
 
     function clearTimers() {
@@ -145,16 +149,10 @@
       animationFrame = 0;
     }
 
-    function markSeen() {
-      try {
-        window.sessionStorage.setItem(SESSION_KEY, 'seen');
-      } catch (_) {
-        // Private browsing/storage restrictions must not affect the website.
-      }
-    }
-
     function finish(message = '', releaseSource = false) {
       operation += 1;
+      awaitingArrival = false;
+      resumeWhenVisible = false;
       clearTimers();
       const skipHadFocus = skip && document.activeElement === skip;
       setState('finished');
@@ -216,10 +214,11 @@
 
     function start() {
       operation += 1;
+      awaitingArrival = false;
+      resumeWhenVisible = false;
       clearTimers();
       video.pause();
       video.classList.remove('is-visible');
-      markSeen();
 
       if (!videoSource) {
         finish('The full-colour website is ready.');
@@ -243,8 +242,9 @@
       requestPlayback();
     }
 
-    function pause() {
+    function pause(forVisibility = false) {
       operation += 1;
+      resumeWhenVisible = forVisibility;
       clearTimers();
       setState('paused');
       video.pause();
@@ -254,6 +254,7 @@
     toggle.addEventListener('click', () => {
       if (state === 'playing') pause();
       else if (state === 'paused') {
+        resumeWhenVisible = false;
         announce('Animation resumed.');
         requestPlayback();
       } else start();
@@ -281,7 +282,7 @@
     video.addEventListener('pause', () => {
       // Keep the controls honest if the browser or device interrupts playback.
       // Our own pause/finish actions already update state before pausing video.
-      if (state === 'playing' && video.paused && !video.ended) pause();
+      if (state === 'playing' && video.paused && !video.ended) pause(document.hidden);
     });
     video.addEventListener('waiting', () => {
       if (state === 'playing') armTimeout();
@@ -296,7 +297,7 @@
     });
 
     const onMotionChange = (event) => {
-      if (event.matches && (state === 'playing' || state === 'paused')) {
+      if (event.matches && (state === 'playing' || state === 'paused' || state === 'waiting')) {
         finish('Animation stopped. The website is now in colour.', true);
       }
     };
@@ -308,18 +309,40 @@
       narrowScreen.addListener(updatePoster);
     }
 
-    let alreadySeen = false;
-    try {
-      alreadySeen = window.sessionStorage.getItem(SESSION_KEY) === 'seen';
-    } catch (_) {
-      // Continue without persistence when session storage is unavailable.
+    function welcomeArrival() {
+      if (!allowsAutoplay()) {
+        // No automatic video request for reduced-motion or data-saving modes.
+        finish('', true);
+      } else if (document.hidden) {
+        // Mobile browsers may prepare a page before bringing it into view.
+        // Keep the opening ready; the visitor should see the bird from the start.
+        awaitingArrival = true;
+        setState('waiting');
+        setColour('mono');
+      } else start();
     }
-    if (!alreadySeen && !reducedMotion.matches && !(connection && connection.saveData)) {
-      start();
-    } else {
-      // In these cases no video URL is assigned, so there is no video request.
-      finish();
-    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (state === 'playing') pause(true);
+      } else if (awaitingArrival) {
+        welcomeArrival();
+      } else if (resumeWhenVisible && state === 'paused') {
+        resumeWhenVisible = false;
+        if (allowsAutoplay()) {
+          announce('Animation resumed.');
+          requestPlayback();
+        } else finish('', true);
+      }
+    });
+
+    window.addEventListener('pageshow', (event) => {
+      // Back/forward cache restores skip normal script initialisation.
+      if (event.persisted) welcomeArrival();
+    });
+
+    // Every opening gets the introduction; a previous visit never suppresses it.
+    welcomeArrival();
   }
 
   function initialiseMap() {

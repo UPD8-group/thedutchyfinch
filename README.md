@@ -38,6 +38,7 @@ The tracked `.openai/hosting.json` identifies the corresponding review site and 
 - `public/assets/`: compressed media, fonts and brand artwork.
 - `scripts/build.mjs`: static build, canonical URLs and Content Security Policy script hashes.
 - `scripts/check.mjs`: structural, local-link, asset, JavaScript syntax and video-size checks.
+- `scripts/test-intro.mjs`: animation startup, loading fallback, controls and visibility regression checks, included in `npm run check`.
 - `docs/gallery-assets.json`: supplied photo provenance, descriptions, dimensions and compression measurements.
 
 The site uses the supplied email address (hello@thedutchyfinch.com.au), Instagram and Facebook profiles for enquiries. There is no shop checkout, enquiry form, inventory feed or invented business contact information.
@@ -51,9 +52,9 @@ The original supplied video is 9,614,135 bytes, 1920 × 1080 and approximately e
 | Desktop MP4 | 1280 × 720 | 779,637 | 91.9% |
 | Mobile MP4 | 960 × 540 | 445,457 | 95.4% |
 
-Only one video source is selected, based on the initial screen width. The animation plays once per browser tab session, with pause, resume, skip and replay controls. Colour begins returning at 3.4 seconds, matching the bird's landing. The full artwork remains visible at its original 16:9 aspect ratio.
+Only one video source is selected, based on the initial screen width. Each opening starts automatically in monochrome, with pause, resume, skip and replay controls. The opening artwork is visible while the script and video load, without flashing the full-colour frame first. Colour begins returning at 3.4 seconds, matching the bird's landing. The full artwork remains visible at its original 16:9 aspect ratio.
 
-Visitors who prefer reduced motion, use a supported data-saving mode, or have already seen the introduction get the full-colour still without an automatic video download. Autoplay failures fall back to the same still. With JavaScript disabled, the full-colour page and navigation remain available.
+Visitors who prefer reduced motion or use a supported data-saving mode get the full-colour still without an automatic video download. Autoplay failures fall back to the same still, with a replay control. Pages opened in the background wait until visible to begin; interrupted playback resumes when the visitor returns, while an explicit pause is respected. Returning through the browser's back/forward cache begins a fresh arrival. With JavaScript disabled, the full-colour page and navigation remain available.
 
 The original large video and GIF are intentionally excluded from this repository. The brand artwork and animation were supplied by the site requester for this project.
 
@@ -86,4 +87,4 @@ Opening hours are explicitly labelled as Dirty Janes' hours. Check the linked ve
 
 Cormorant Garamond and DM Sans are self-hosted. Their SIL Open Font License notices are included in `public/assets/licenses/`.
 
-There are no analytics scripts, advertising pixels or externally loaded font services. The Google map loads only when requested by the visitor. A small session-storage preference remembers whether the finch introduction has played.
+There are no analytics scripts, advertising pixels or externally loaded font services. The Google map loads only when requested by the visitor. The introduction does not store a playback preference; it starts afresh on each opening.

@@ -55,4 +55,5 @@ const desktop = await stat(path.join(root, 'assets/finch-arrival-1280.mp4'));
 const mobile = await stat(path.join(root, 'assets/finch-arrival-960.mp4'));
 assert(desktop.size < 1_000_000, 'Desktop video exceeds 1 MB budget.');
 assert(mobile.size < 600_000, 'Mobile video exceeds 600 KB budget.');
+execFileSync(process.execPath, ['--test', 'scripts/test-intro.mjs'], { stdio: 'inherit' });
 console.log(`Checked ${files.length} files: page structure, local links, media references, structured data, JavaScript syntax and video budgets.`);

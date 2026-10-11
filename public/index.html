@@ -18,12 +18,17 @@
     document.documentElement.classList.add('js-enabled');
     try {
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const saveData = navigator.connection && navigator.connection.saveData;
-      if (!reduced && !saveData && sessionStorage.getItem('dutchy-finch-intro-v1') !== 'seen') {
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const saveData = connection && connection.saveData;
+      if (!reduced && !saveData) {
         document.documentElement.dataset.introPending = 'true';
       }
     } catch (_) {}
-    window.setTimeout(() => { delete document.documentElement.dataset.introPending; }, 4000);
+    // Keep the opening frame visible while deferred scripts load. If a script
+    // fails, restore the usable full-colour page after loading has finished.
+    window.addEventListener('load', () => {
+      if (document.body.dataset.intro === 'idle') delete document.documentElement.dataset.introPending;
+    }, { once: true });
   })();
   </script>
   <link rel="stylesheet" href="/styles.css">
