@@ -28,6 +28,14 @@ Netlify's `URL` environment variable sets the canonical and social preview URLs 
 
 The tracked `.openai/hosting.json` identifies the corresponding review site and its static output directory. It contains no credentials.
 
+### oo.studio demo address
+
+The build also generates `dist/demo/dutchyfinch/` from the same source. Its local page, image, animation, script and font URLs include `/demo/dutchyfinch/`, so the site can be served at `https://oo.studio/demo/dutchyfinch/` through Netlify's proxy rewrites. Future builds update both versions together. Edit `public/` as usual; do not edit the generated copy.
+
+The oo.studio repository routes `/demo/dutchyfinch` and `/demo/dutchyfinch/*` directly to the same paths on `https://thedutchyfinch.netlify.app`, using status `200` to retain the branded address. Demo pages request `noindex` and retain the original site's canonical identity. A scoped, non-forced 404 fallback keeps missing demo pages and their return-home links within the demo.
+
+Every build runs `scripts/check-build.mjs` to validate both versions' local resources, original media and script bytes, inline-script CSP hashes, metadata and demo routing.
+
 ## Editing the site
 
 - `public/index.html`: business copy, service descriptions, social links, location and structured data.
@@ -36,7 +44,8 @@ The tracked `.openai/hosting.json` identifies the corresponding review site and 
 - `public/gallery.js` and `public/gallery.css`: photograph grid, expand/collapse controls and the accessible full-photo viewer.
 - `public/privacy/index.html`: privacy note reflecting this implementation.
 - `public/assets/`: compressed media, fonts and brand artwork.
-- `scripts/build.mjs`: static build, canonical URLs and Content Security Policy script hashes.
+- `scripts/build.mjs`: static build, branded demo output, canonical URLs and Content Security Policy script hashes.
+- `scripts/check-build.mjs`: validation of the generated root and demo outputs, included in every build.
 - `scripts/check.mjs`: structural, local-link, asset, JavaScript syntax and video-size checks.
 - `scripts/test-intro.mjs`: animation startup, loading fallback, controls and visibility regression checks, included in `npm run check`.
 - `docs/gallery-assets.json`: supplied photo provenance, descriptions, dimensions and compression measurements.

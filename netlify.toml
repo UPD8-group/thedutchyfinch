@@ -7,3 +7,10 @@
 
 [dev]
   publish = "public"
+
+# Existing demo files take precedence; missing demo pages keep a scoped 404
+# whose assets and home links remain inside the branded demo address.
+[[redirects]]
+  from = "/demo/dutchyfinch/*"
+  to = "/demo/dutchyfinch/404.html"
+  status = 404
