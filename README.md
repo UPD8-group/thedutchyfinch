@@ -40,7 +40,7 @@ The tracked `.openai/hosting.json` identifies the corresponding review site and 
 - `scripts/check.mjs`: structural, local-link, asset, JavaScript syntax and video-size checks.
 - `docs/gallery-assets.json`: supplied photo provenance, descriptions, dimensions and compression measurements.
 
-The site uses the supplied Instagram and Facebook profiles for enquiries. There is no shop checkout, enquiry form, inventory feed or invented business contact information.
+The site uses the supplied email address (hello@thedutchyfinch.com.au), Instagram and Facebook profiles for enquiries. There is no shop checkout, enquiry form, inventory feed or invented business contact information.
 
 ## The finch animation
 

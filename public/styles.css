@@ -169,6 +169,10 @@ body[data-colour='colour'][data-intro='paused'],body[data-colour='colour'][data-
 .social-links .icon{width:22px;height:22px;color:#7a8467}
 .social-links>a>span:not(.social-arrow):not(.sr-only){font-family:var(--serif);font-size:27px;line-height:1.1}
 .social-links small{display:block;font-family:var(--sans);font-size:10px;line-height:1.5;letter-spacing:.02em;margin-top:7px;color:var(--muted)}
+.social-links .email-contact{grid-column:1/-1;min-width:0}
+.social-links .email-contact>span:not(.social-arrow){min-width:0;overflow-wrap:anywhere}
+.social-links .email-contact small{font-size:12px}
+.social-links .email-contact .icon,.social-links .email-contact .social-arrow{flex-shrink:0}
 .social-arrow{margin-left:auto;font-size:24px;color:#7a8467}
 .closing-note{display:flex;align-items:center;justify-content:center;gap:40px;background:#e5d9bf;min-height:120px;padding:34px 22px;border-top:1px solid #d8cab0;border-bottom:1px solid #d8cab0}
 .closing-note p{font-family:var(--serif);font-size:clamp(30px,3.2vw,45px);letter-spacing:-.035em;line-height:1.1;margin:0}
