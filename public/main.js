@@ -77,15 +77,16 @@
     const START_TIMEOUT = 4000;
     const LOAD_TIMEOUT = 12000;
     const narrowScreen = window.matchMedia('(max-width: 700px)');
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    // A normal animated image does not depend on permission to play video.
+    // Coarse pointers include phones in landscape and larger touch devices.
+    const imageFirst = narrowScreen.matches || window.matchMedia('(pointer: coarse)').matches;
     // Pick one video asset. Resizing never silently downloads the other version.
     const videoSource = narrowScreen.matches
       ? video.dataset.mobileSrc || video.dataset.desktopSrc
       : video.dataset.desktopSrc || video.dataset.mobileSrc;
 
     let state = 'finished';
-    let colour = 'colour';
+    let colour = 'mono';
     let sourceAssigned = false;
     let operation = 0;
     let timeout = 0;
@@ -95,12 +96,10 @@
     let renderer = 'video';
     let hasVideoFrame = false;
     let hasPlayed = false;
-    let useImageFallback = false;
+    let useImageAnimation = imageFirst;
     let imageBlob = null;
     let imageURL = '';
     let imageRequest = null;
-
-    const allowsAutoplay = () => !reducedMotion.matches && !(connection && connection.saveData);
 
     video.muted = true;
     video.defaultMuted = true;
@@ -188,7 +187,7 @@
       video.pause();
       video.classList.remove('is-visible');
       setColour('colour');
-      // Skipping, preference changes and failures also stop a pending download.
+      // Skipping, departures and failures also stop a pending download.
       if (releaseSource && sourceAssigned) {
         video.removeAttribute('src');
         video.preload = 'none';
@@ -199,19 +198,23 @@
       if (skipHadFocus) toggle.focus({ preventScroll: true });
     }
 
+    function prepareArrival() {
+      finish('', true);
+      awaitingArrival = true;
+      setState('waiting');
+      // Prepare the cached page's snapshot too, before pageshow or focus.
+      root.dataset.introPending = 'true';
+      setColour('mono');
+    }
+
     function armTimeout() {
       window.clearTimeout(timeout);
       const currentOperation = operation;
       timeout = window.setTimeout(() => {
-        if (currentOperation === operation && state === 'playing') {
-          if (renderer === 'video') startImageAnimation();
-          else {
-            useImageFallback = false;
-            imageBlob = null;
-            finish('The full-colour website is ready. You can try the animation again.', true);
-          }
+        if (currentOperation === operation && state === 'playing' && renderer === 'video') {
+          startImageAnimation();
         }
-      }, renderer === 'video' && !hasVideoFrame ? START_TIMEOUT : LOAD_TIMEOUT);
+      }, !hasVideoFrame ? START_TIMEOUT : LOAD_TIMEOUT);
     }
 
     function checkColourCue() {
@@ -237,7 +240,7 @@
       clearTimers();
       releaseImage();
       renderer = 'image';
-      useImageFallback = true;
+      useImageAnimation = true;
       resumeWhenVisible = false;
       setState('playing');
       video.autoplay = false;
@@ -251,7 +254,8 @@
       }
       setColour('mono');
       announce('The finch is arriving. You can skip the animation.');
-      armTimeout();
+      // A slow connection must not skip an arrival that has not played yet.
+      // Keep the opening artwork and Skip available until loading resolves.
 
       try {
         if (!imageBlob) {
@@ -289,14 +293,14 @@
         };
         imageAnimation.onerror = () => {
           if (currentOperation !== operation) return;
-          useImageFallback = false;
+          useImageAnimation = imageFirst;
           imageBlob = null;
           finish('The full-colour website is ready. You can try the animation again.', true);
         };
         imageAnimation.src = imageURL;
       } catch (_) {
         if (currentOperation !== operation) return;
-        useImageFallback = false;
+        useImageAnimation = imageFirst;
         finish('The full-colour website is ready. You can try the animation again.', true);
       }
     }
@@ -340,7 +344,7 @@
       video.pause();
       video.classList.remove('is-visible');
 
-      if (useImageFallback) {
+      if (useImageAnimation) {
         startImageAnimation();
         return;
       }
@@ -427,50 +431,33 @@
       }
     });
 
-    const onMotionChange = (event) => {
-      if (event.matches && (state === 'playing' || state === 'paused' || state === 'waiting')) {
-        finish('Animation stopped. The website is now in colour.', true);
-      }
-    };
-    if (typeof reducedMotion.addEventListener === 'function') {
-      reducedMotion.addEventListener('change', onMotionChange);
+    if (typeof narrowScreen.addEventListener === 'function') {
       narrowScreen.addEventListener('change', updatePoster);
     } else {
-      reducedMotion.addListener(onMotionChange);
       narrowScreen.addListener(updatePoster);
     }
 
     function welcomeArrival() {
-      if (!allowsAutoplay()) {
-        // No automatic video request for reduced-motion or data-saving modes.
-        finish('', true);
-      } else if (document.hidden) {
+      if (document.hidden) {
         // Mobile browsers may prepare a page before bringing it into view.
         // Keep the opening ready; the visitor should see the bird from the start.
-        awaitingArrival = true;
-        setState('waiting');
-        setColour('mono');
+        prepareArrival();
       } else start();
     }
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        if (state === 'playing' && renderer === 'image') {
+        if (state === 'finished' || (state === 'playing' && renderer === 'image')) {
           // A one-shot image cannot pause. Restart from its first frame when
           // visible again, instead of returning to a film that ran off-screen.
-          finish('', true);
-          awaitingArrival = true;
-          setState('waiting');
-          setColour('mono');
+          prepareArrival();
         } else if (state === 'playing') pause(true);
       } else if (awaitingArrival) {
         welcomeArrival();
       } else if (resumeWhenVisible && state === 'paused') {
         resumeWhenVisible = false;
-        if (allowsAutoplay()) {
-          announce('Animation resumed.');
-          requestPlayback();
-        } else finish('', true);
+        announce('Animation resumed.');
+        requestPlayback();
       }
     });
 
@@ -478,7 +465,7 @@
       // Back/forward cache restores skip normal script initialisation.
       if (event.persisted) welcomeArrival();
     });
-    window.addEventListener('pagehide', () => finish('', true));
+    window.addEventListener('pagehide', prepareArrival);
 
     // Every opening gets the introduction; a previous visit never suppresses it.
     welcomeArrival();

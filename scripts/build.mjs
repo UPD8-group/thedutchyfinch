@@ -5,6 +5,12 @@ await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
 await cp('public', 'dist', { recursive: true });
 let html = await readFile('public/index.html', 'utf8');
+// A new script URL accompanies each change, including for returning mobile
+// visitors whose browser retained an older copy of the introduction code.
+const mainScript = await readFile('public/main.js');
+const mainName = `main.${createHash('sha256').update(mainScript).digest('hex').slice(0, 12)}.js`;
+await writeFile(`dist/${mainName}`, mainScript);
+html = html.replace('src="/main.js"', `src="/${mainName}"`);
 const siteOrigin = new URL(process.env.URL || process.env.SITE_URL || 'https://the-dutchy-finch.hello490589.chatgpt.site').origin;
 html = html.replace('content="/assets/finch-colour-1600.webp"', `content="${siteOrigin}/assets/finch-colour-1600.webp"`)
   .replace('<meta property="og:type" content="website">', `<meta property="og:type" content="website">\n  <meta property="og:url" content="${siteOrigin}/">\n  <link rel="canonical" href="${siteOrigin}/">`);

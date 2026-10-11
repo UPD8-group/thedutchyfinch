@@ -42,7 +42,7 @@ for (const match of css.matchAll(/url\(['"]?(\/[^)'"\s]+)/g)) {
   assert(files.includes(path.join(root, match[1])), `Missing stylesheet resource ${match[1]}`);
 }
 const home = await readFile(path.join(root, 'index.html'), 'utf8');
-assert(!/<video[^>]*\ssrc\s*=/.test(home), 'Video must not download until preferences are checked.');
+assert(!/<video[^>]*\ssrc\s*=/.test(home), 'Video must not download before the appropriate renderer is selected.');
 assert(/<video[^>]*\bmuted\b/.test(home), 'Hero video must be muted.');
 assert(/<video[^>]*\bplaysinline\b/.test(home), 'Hero video must play inline.');
 for (const match of home.matchAll(/data-(?:desktop-src|mobile-src|opening-desktop|opening-mobile|colour-desktop|colour-mobile|fallback-src)="([^"]+)"/g)) {

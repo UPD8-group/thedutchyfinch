@@ -183,8 +183,12 @@ function page(options = {}) {
     matchMedia(query) {
       if (!queries.has(query)) {
         const media = new Events();
-        media.matches = query.includes('prefers-reduced-motion') ? Boolean(options.reducedMotion)
-          : (options.width || 390) <= Number(query.match(/max-width:\s*(\d+)/)?.[1] || 700);
+        media.matches = query.split(',').some((part) => {
+          if (part.includes('prefers-reduced-motion')) return Boolean(options.reducedMotion);
+          if (part.includes('pointer:') && part.includes('coarse')) return Boolean(options.coarse);
+          const maxWidth = part.match(/max-width:\s*(\d+)/)?.[1];
+          return maxWidth ? (options.width || 390) <= Number(maxWidth) : false;
+        });
         media.addListener = (callback) => media.addEventListener('change', callback);
         queries.set(query, media);
       }
@@ -211,10 +215,15 @@ function page(options = {}) {
   });
   window.window = window;
   const context = vm.createContext(window);
+  const initial = {
+    colour: body.dataset.colour,
+    posterSource: elements.get('hero-poster').src,
+    posterSourceSet: elements.get('hero-poster').srcset,
+  };
   vm.runInContext(bootstrap, context, { filename: 'index.html bootstrap' });
 
   return {
-    root, body, video, document, fetches, activeURLs, revokedURLs,
+    root, body, video, document, fetches, activeURLs, revokedURLs, initial,
     animation: elements.get('hero-animation'),
     poster: elements.get('hero-poster'), toggle: elements.get('animation-toggle'), skip: elements.get('animation-skip'),
     start: () => vm.runInContext(main, context, { filename: 'public/main.js' }),
@@ -246,51 +255,87 @@ function page(options = {}) {
     },
     pageShow(persisted) { window.emit('pageshow', { persisted }); },
     pageHide(persisted = false) { window.emit('pagehide', { persisted }); },
+    motionPreference(reduced) {
+      for (const [query, media] of queries) {
+        if (!query.includes('prefers-reduced-motion')) continue;
+        media.matches = reduced;
+        media.emit('change', { matches: reduced });
+      }
+    },
     end() { video.ended = true; video.paused = true; video.emit('ended'); },
   };
 }
 
-test('mobile arrival prepares monochrome before its first playback frame', async () => {
+test('mobile arrival is monochrome before scripts run and starts its image without a video request', async () => {
   const view = page();
+  assert.equal(view.initial.colour, 'mono');
+  assert([view.poster.dataset.openingMobile, view.poster.dataset.openingDesktop].includes(view.initial.posterSource));
+  assert.equal(view.initial.posterSourceSet, `${view.poster.dataset.openingMobile} 900w, ${view.poster.dataset.openingDesktop} 1600w`);
   assert.equal(view.root.dataset.introPending, 'true');
   assert.equal(view.video.src, '');
   view.advance(6000);
   assert.equal(view.root.dataset.introPending, 'true', 'A slow script must not expose colour before the opening.');
   view.start();
   assert.equal(view.body.dataset.colour, 'mono');
-  assert.equal(view.video.src, view.video.dataset.mobileSrc);
+  assert.equal(view.video.src, '');
+  assert.equal(view.video.playCalls, 0);
   assert.equal(view.poster.src, view.poster.dataset.openingMobile);
-  assert.equal(view.video.hasAttribute('autoplay'), true);
-  assert.deepEqual(view.video.playObservations[0], {
-    visible: true, poster: view.poster.dataset.openingMobile, muted: true, inline: true,
-  }, 'The video must already be visible with its opening poster when playback is requested.');
   await view.flush();
-  assert.equal(view.video.playCalls, 1);
-  assert.equal(view.video.paused, false);
-  assert.equal(view.video.muted, true);
-  assert.equal(view.video.playsInline, true);
-  assert.equal(view.video.classList.contains('is-visible'), true);
+  assert.match(view.animation.src, /^blob:/);
+  assert.equal(view.animation.hidden, false);
+  assert.equal(view.fetches.length, 1);
+  assert.equal(view.fetches[0].url, view.animation.dataset.fallbackSrc);
+  assert.equal(view.toggle.hidden, true);
+  assert.equal(view.skip.hidden, false);
+  assert.equal(view.video.playCalls, 0);
+});
+
+test('a landscape phone uses the image arrival even above the narrow-screen breakpoint', async () => {
+  const view = page({ width: 960, coarse: true });
+  view.start();
+  await view.flush();
+  assert.equal(view.video.playCalls, 0);
+  assert.equal(view.video.src, '');
+  assert.match(view.animation.src, /^blob:/);
+  assert.equal(view.body.dataset.colour, 'mono');
 });
 
 test('reloads, old seen flags and restored pages still receive a fresh introduction', async () => {
-  for (const navigationType of ['navigate', 'reload']) {
-    const view = page({ seen: true, navigationType });
-    assert.equal(view.root.dataset.introPending, 'true');
-    view.start();
-    await view.flush();
-    assert.equal(view.body.dataset.colour, 'mono');
-    assert.equal(view.video.playCalls, 1);
-    assert.equal(view.video.paused, false);
-    view.pageShow(false);
-    await view.flush();
-    assert.equal(view.video.playCalls, 1, 'Initial pageshow must not start a duplicate film.');
-    view.seek(8);
-    view.end();
-    view.pageShow(true);
-    await view.flush();
-    assert.equal(view.video.playCalls, 2);
-    assert.equal(view.video.currentTime, 0);
-    assert.equal(view.body.dataset.colour, 'mono');
+  for (const width of [390, 1440]) {
+    for (const navigationType of ['navigate', 'reload']) {
+      const view = page({ seen: true, navigationType, width });
+      assert.equal(view.root.dataset.introPending, 'true');
+      view.start();
+      await view.flush();
+      assert.equal(view.body.dataset.colour, 'mono');
+      const firstImage = view.animation.src;
+      const firstVideoRequests = view.video.playCalls;
+      view.pageShow(false);
+      await view.flush();
+      assert.equal(view.animation.src, firstImage, 'Initial pageshow must not restart the image.');
+      assert.equal(view.video.playCalls, firstVideoRequests, 'Initial pageshow must not restart the video.');
+      if (width === 390) view.frame(Number(view.animation.dataset.durationMs));
+      else { view.seek(8); view.end(); }
+      assert.equal(view.body.dataset.colour, 'colour');
+      view.pageHide(true);
+      assert.equal(view.body.dataset.colour, 'mono', 'The cached page snapshot must already contain the opening state.');
+      assert.equal(view.body.dataset.intro, 'waiting');
+      assert.equal(view.poster.src, width === 390 ? view.poster.dataset.openingMobile : view.poster.dataset.openingDesktop);
+      assert.equal(view.animation.src, '');
+      assert.equal(view.activeURLs.size, 0);
+      view.pageShow(true);
+      await view.flush();
+      assert.equal(view.body.dataset.colour, 'mono');
+      assert.equal(view.body.dataset.intro, 'playing');
+      if (width === 390) {
+        assert.notEqual(view.animation.src, firstImage);
+        assert.match(view.animation.src, /^blob:/);
+        assert.equal(view.video.playCalls, 0);
+      } else {
+        assert.equal(view.video.playCalls, 2);
+        assert.equal(view.video.currentTime, 0);
+      }
+    }
   }
 });
 
@@ -300,34 +345,50 @@ test('unavailable session storage cannot change first paint or prevent playback'
   view.start();
   await view.flush();
   assert.equal(view.body.dataset.colour, 'mono');
-  assert.equal(view.video.paused, false);
+  assert.match(view.animation.src, /^blob:/);
+  assert.equal(view.video.playCalls, 0);
 });
 
 test('desktop arrival selects its desktop artwork and video', async () => {
   const view = page({ width: 1440 });
   view.start();
+  assert.equal(view.video.hasAttribute('autoplay'), true);
+  assert.deepEqual(view.video.playObservations[0], {
+    visible: true, poster: view.poster.dataset.openingDesktop, muted: true, inline: true,
+  }, 'The video must already be visible with its opening poster when playback is requested.');
   await view.flush();
   assert.equal(view.video.src, view.video.dataset.desktopSrc);
   assert.equal(view.poster.src, view.poster.dataset.openingDesktop);
   assert.equal(view.video.playCalls, 1);
 });
 
-test('motion and data preferences show colour without an automatic video request', async () => {
-  for (const preference of [{ reducedMotion: true }, { saveData: true }]) {
-    const view = page(preference);
-    assert.notEqual(view.root.dataset.introPending, 'true');
-    view.start();
-    await view.flush();
-    assert.equal(view.video.src, '');
-    assert.equal(view.video.playCalls, 0);
-    assert.equal(view.fetches.length, 0);
-    assert.equal(view.body.dataset.colour, 'colour');
-    assert.equal(view.poster.src, view.poster.dataset.colourMobile);
+test('motion and data settings do not silently skip the explicitly required arrival', async () => {
+  for (const width of [390, 1440]) {
+    for (const preference of [{ reducedMotion: true }, { saveData: true }, { reducedMotion: true, saveData: true }]) {
+      const view = page({ width, ...preference });
+      assert.equal(view.initial.colour, 'mono');
+      assert.equal(view.root.dataset.introPending, 'true');
+      view.start();
+      await view.flush();
+      assert.equal(view.body.dataset.colour, 'mono');
+      assert.equal(view.body.dataset.intro, 'playing');
+      if (width === 390) {
+        assert.equal(view.video.playCalls, 0);
+        assert.match(view.animation.src, /^blob:/);
+      } else {
+        assert.equal(view.video.paused, false);
+        assert.equal(view.video.playCalls, 1);
+      }
+      view.motionPreference(false);
+      view.motionPreference(true);
+      assert.equal(view.body.dataset.intro, 'playing');
+      assert.equal(view.body.dataset.colour, 'mono');
+    }
   }
 });
 
 test('colour follows the landing cue and the completed film resolves to its still', async () => {
-  const view = page();
+  const view = page({ width: 1440 });
   view.start();
   await view.flush();
   view.seek(3.39);
@@ -337,11 +398,11 @@ test('colour follows the landing cue and the completed film resolves to its stil
   view.end();
   assert.equal(view.body.dataset.intro, 'finished');
   assert.equal(view.video.classList.contains('is-visible'), false);
-  assert.equal(view.poster.src, view.poster.dataset.colourMobile);
+  assert.equal(view.poster.src, view.poster.dataset.colourDesktop);
 });
 
 test('Skip releases the film, restores focus and Replay restarts from monochrome', async () => {
-  const view = page();
+  const view = page({ width: 1440 });
   view.start();
   await view.flush();
   view.seek(2);
@@ -361,7 +422,7 @@ test('Skip releases the film, restores focus and Replay restarts from monochrome
 });
 
 test('an explicit Pause survives backgrounding and only resumes when requested', async () => {
-  const view = page();
+  const view = page({ width: 1440 });
   view.start();
   await view.flush();
   view.seek(1.5);
@@ -382,7 +443,7 @@ test('an explicit Pause survives backgrounding and only resumes when requested',
 });
 
 test('autoplay denial runs the same arrival as an image with honest controls and a colour cue', async () => {
-  const view = page({ playMode: 'reject' });
+  const view = page({ width: 1440, playMode: 'reject' });
   view.start();
   await view.flush();
   assert.equal(view.body.dataset.colour, 'mono');
@@ -407,7 +468,7 @@ test('autoplay denial runs the same arrival as an image with honest controls and
 
 test('a film that never loads or stalls starts the image fallback instead of skipping the arrival', async () => {
   for (const playMode of ['pending', 'ready']) {
-    const view = page({ playMode });
+    const view = page({ width: 1440, playMode });
     view.start();
     await view.flush();
     if (playMode === 'ready') view.video.emit('waiting');
@@ -434,16 +495,19 @@ test('a document opened in the background waits until it becomes visible', async
   view.advance(30000);
   assert.equal(view.video.playCalls, 0);
   assert.equal(view.video.paused, true);
+  assert.equal(view.fetches.length, 0);
+  assert.equal(view.body.dataset.colour, 'mono');
   view.visibility(true);
   await view.flush();
-  assert.equal(view.video.playCalls, 1);
-  assert.equal(view.video.paused, false);
+  assert.equal(view.video.playCalls, 0);
+  assert.match(view.animation.src, /^blob:/);
+  assert.equal(view.fetches.length, 1);
   assert.equal(view.body.dataset.colour, 'mono');
   assert.equal(view.video.currentTime, 0);
 });
 
 test('automatic background suspension resumes at the same place without restarting', async () => {
-  const view = page();
+  const view = page({ width: 1440 });
   view.start();
   await view.flush();
   view.seek(1.5);
@@ -460,7 +524,7 @@ test('automatic background suspension resumes at the same place without restarti
 
 test('unexpected native pause or error switches to the image and ignores stale video events', async () => {
   for (const failure of ['pause', 'error']) {
-    const view = page({ playMode: failure === 'pause' ? 'pending' : 'ready' });
+    const view = page({ width: 1440, playMode: failure === 'pause' ? 'pending' : 'ready' });
     view.start();
     await view.flush();
     if (failure === 'pause') view.video.pause();
@@ -481,12 +545,11 @@ test('unexpected native pause or error switches to the image and ignores stale v
   }
 });
 
-test('failed or stuck image fallback leaves a usable colour page and permits a video retry', async () => {
-  for (const failure of [{ fetchMode: 'reject' }, { imageMode: 'reject' }, { imageMode: 'pending' }]) {
-    const view = page({ playMode: 'reject', ...failure });
+test('an actual image failure leaves a usable colour page and permits a video retry', async () => {
+  for (const failure of [{ fetchMode: 'reject' }, { imageMode: 'reject' }]) {
+    const view = page({ width: 1440, playMode: 'reject', ...failure });
     view.start();
     await view.flush();
-    if (failure.imageMode === 'pending') { view.advance(30000); await view.flush(); }
     assert.equal(view.body.dataset.intro, 'finished');
     assert.equal(view.body.dataset.colour, 'colour');
     assert.equal(view.toggle.hidden, false);
@@ -516,8 +579,8 @@ test('Skip or page departure cancels pending image work and late completion cann
       } else view.imageReady(true);
       await view.flush();
       view.frame(20000);
-      assert.equal(view.body.dataset.intro, 'finished');
-      assert.equal(view.body.dataset.colour, 'colour');
+      assert.equal(view.body.dataset.intro, leave === 'skip' ? 'finished' : 'waiting');
+      assert.equal(view.body.dataset.colour, leave === 'skip' ? 'colour' : 'mono');
       assert.equal(view.animation.src, '');
       assert.equal(view.activeURLs.size, 0);
       assert.equal(view.toggle.hidden, false);
@@ -526,7 +589,7 @@ test('Skip or page departure cancels pending image work and late completion cann
 });
 
 test('image replay reuses the downloaded film while starting a fresh, cleaned-up image URL', async () => {
-  const view = page({ playMode: 'reject' });
+  const view = page();
   view.start();
   await view.flush();
   const firstURL = view.animation.src;
@@ -538,7 +601,7 @@ test('image replay reuses the downloaded film while starting a fresh, cleaned-up
   assert.match(view.animation.src, /^blob:/);
   assert.equal(view.activeURLs.size, 1);
   assert.equal(view.fetches.length, 1);
-  assert.equal(view.video.playCalls, 1);
+  assert.equal(view.video.playCalls, 0);
   assert.equal(view.body.dataset.colour, 'mono');
   view.frame(3399);
   assert.equal(view.body.dataset.colour, 'mono');
@@ -547,7 +610,7 @@ test('image replay reuses the downloaded film while starting a fresh, cleaned-up
 });
 
 test('an image arrival clears while hidden and restarts from its beginning when visible', async () => {
-  const view = page({ playMode: 'reject' });
+  const view = page();
   view.start();
   await view.flush();
   const firstURL = view.animation.src;
@@ -567,4 +630,60 @@ test('an image arrival clears while hidden and restarts from its beginning when 
   assert.equal(view.body.dataset.colour, 'mono');
   view.frame(1);
   assert.equal(view.body.dataset.colour, 'colour');
+});
+
+test('returning after a completed introduction automatically starts a fresh arrival', async () => {
+  for (const width of [390, 1440]) {
+    const view = page({ width });
+    view.start();
+    await view.flush();
+    const firstImage = view.animation.src;
+    if (width === 390) view.frame(Number(view.animation.dataset.durationMs));
+    else { view.seek(8); view.end(); }
+    assert.equal(view.body.dataset.intro, 'finished');
+    assert.equal(view.body.dataset.colour, 'colour');
+    view.visibility(false);
+    assert.equal(view.body.dataset.colour, 'mono');
+    view.advance(30000);
+    view.visibility(true);
+    await view.flush();
+    assert.equal(view.body.dataset.colour, 'mono');
+    assert.equal(view.body.dataset.intro, 'playing');
+    if (width === 390) {
+      assert.match(view.animation.src, /^blob:/);
+      assert.notEqual(view.animation.src, firstImage);
+      assert.equal(view.video.playCalls, 0);
+      assert.equal(view.fetches.length, 1);
+    } else {
+      assert.equal(view.video.paused, false);
+      assert.equal(view.video.currentTime, 0);
+      assert.equal(view.video.playCalls, 2);
+    }
+  }
+});
+
+test('a late image download or load remains monochrome and starts when ready without a manual Play', async () => {
+  for (const pending of ['fetch', 'image']) {
+    const view = page({
+      fetchMode: pending === 'fetch' ? 'pending' : 'ready',
+      imageMode: pending === 'image' ? 'pending' : 'ready',
+    });
+    view.start();
+    await view.flush();
+    view.advance(30000);
+    await view.flush();
+    assert.equal(view.body.dataset.colour, 'mono');
+    assert.equal(view.body.dataset.intro, 'playing');
+    assert.equal(view.toggle.hidden, true);
+    assert.equal(view.skip.hidden, false);
+    assert.equal(view.fetches[0].signal.aborted, false);
+    if (pending === 'fetch') view.fetches[0].resolve(); else view.imageReady();
+    await view.flush();
+    assert.match(view.animation.src, /^blob:/);
+    assert.equal(view.animation.hidden, false);
+    assert.equal(view.video.playCalls, 0);
+    assert.equal(view.body.dataset.colour, 'mono');
+    view.frame(3400);
+    assert.equal(view.body.dataset.colour, 'colour');
+  }
 });
