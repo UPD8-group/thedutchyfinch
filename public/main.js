@@ -59,14 +59,13 @@
     const video = document.getElementById('hero-video');
     const poster = document.getElementById('hero-poster');
     const imageAnimation = document.getElementById('hero-animation');
-    const toggle = document.getElementById('animation-toggle');
-    const label = document.getElementById('animation-label');
     const skip = document.getElementById('animation-skip');
+    const title = document.getElementById('hero-title');
     const status = document.getElementById('animation-status');
     const body = document.body;
     const root = document.documentElement;
 
-    if (!video || !poster || !toggle || !label) {
+    if (!video || !poster) {
       body.dataset.intro = 'finished';
       body.dataset.colour = 'colour';
       delete root.dataset.introPending;
@@ -95,7 +94,6 @@
     let resumeWhenVisible = false;
     let renderer = 'video';
     let hasVideoFrame = false;
-    let hasPlayed = false;
     let useImageAnimation = imageFirst;
     let imageBlob = null;
     let imageURL = '';
@@ -142,17 +140,7 @@
     function setState(nextState) {
       state = nextState;
       body.dataset.intro = nextState;
-      const action = nextState === 'playing' ? 'Pause animation'
-        : nextState === 'paused' ? 'Resume animation'
-        : nextState === 'waiting' || !hasPlayed ? 'Play animation' : 'Replay animation';
-      label.textContent = action;
-      toggle.setAttribute('aria-label', action);
-      // Animated images have no native pause API. Skip remains available.
-      toggle.hidden = renderer === 'image' && nextState === 'playing';
       if (skip) skip.hidden = !['playing', 'paused', 'waiting'].includes(nextState);
-      if (toggle.hidden && document.activeElement === toggle && skip) {
-        skip.focus({ preventScroll: true });
-      }
     }
 
     function clearTimers() {
@@ -195,7 +183,8 @@
         video.load();
       }
       if (message) announce(message);
-      if (skipHadFocus) toggle.focus({ preventScroll: true });
+      // Skip disappears on completion; keep keyboard focus in the page content.
+      if (skipHadFocus && title) title.focus({ preventScroll: true });
     }
 
     function prepareArrival() {
@@ -232,7 +221,7 @@
       if (renderer === 'image') return;
       const source = imageAnimation && imageAnimation.dataset.fallbackSrc;
       if (!source) {
-        finish('The full-colour website is ready. Select play to watch the animation.', true);
+        finish('The full-colour website is ready. Refresh the page to try the animation again.', true);
         return;
       }
 
@@ -271,12 +260,11 @@
         if (currentOperation !== operation || state !== 'playing') return;
 
         // Each playback gets a new image resource identity, so a cached clip
-        // starts at frame one. Its downloaded bytes are reused for Replay.
+        // starts at frame one. Its downloaded bytes are reused on later arrivals.
         imageURL = URL.createObjectURL(imageBlob);
         imageAnimation.onload = () => {
           if (currentOperation !== operation || state !== 'playing') return;
           window.clearTimeout(timeout);
-          hasPlayed = true;
           imageAnimation.hidden = false;
           revealPoster();
           const startedAt = performance.now();
@@ -295,13 +283,13 @@
           if (currentOperation !== operation) return;
           useImageAnimation = imageFirst;
           imageBlob = null;
-          finish('The full-colour website is ready. You can try the animation again.', true);
+          finish('The full-colour website is ready. Refresh the page to try the animation again.', true);
         };
         imageAnimation.src = imageURL;
       } catch (_) {
         if (currentOperation !== operation) return;
         useImageAnimation = imageFirst;
-        finish('The full-colour website is ready. You can try the animation again.', true);
+        finish('The full-colour website is ready. Refresh the page to try the animation again.', true);
       }
     }
 
@@ -317,16 +305,16 @@
         const playRequest = video.play();
         if (playRequest && typeof playRequest.catch === 'function') {
           playRequest.catch(() => {
-            // Ignore promises cancelled by the visitor pausing or skipping.
+            // Ignore promises cancelled by a departure or the visitor skipping.
             if (currentOperation === operation && state === 'playing') {
-              if (document.hidden) pause(true);
+              if (document.hidden) pauseForVisibility();
               else startImageAnimation();
             }
           });
         }
       } catch (_) {
         if (currentOperation === operation) {
-          if (document.hidden) pause(true);
+          if (document.hidden) pauseForVisibility();
           else startImageAnimation();
         }
       }
@@ -354,7 +342,7 @@
       }
 
       setColour('mono');
-      announce('The finch is arriving. You can pause or skip the animation.');
+      announce('The finch is arriving. You can skip the animation.');
       if (!sourceAssigned) {
         video.preload = 'auto';
         video.src = videoSource;
@@ -370,9 +358,9 @@
       requestPlayback();
     }
 
-    function pause(forVisibility = false) {
+    function pauseForVisibility() {
       operation += 1;
-      resumeWhenVisible = forVisibility;
+      resumeWhenVisible = true;
       clearTimers();
       setState('paused');
       video.autoplay = false;
@@ -380,21 +368,9 @@
       announce('Animation paused.');
     }
 
-    toggle.addEventListener('click', () => {
-      if (renderer === 'image' && state === 'playing') return;
-      if (state === 'playing') pause();
-      else if (state === 'paused') {
-        resumeWhenVisible = false;
-        announce('Animation resumed.');
-        requestPlayback();
-      } else start();
-    });
-
     if (skip) {
       skip.addEventListener('click', () => {
         finish('Animation skipped. The website is now in colour.', true);
-        // The skip button disappears; preserve a useful keyboard focus target.
-        toggle.focus({ preventScroll: true });
       });
     }
 
@@ -404,7 +380,6 @@
         return;
       }
       hasVideoFrame = true;
-      hasPlayed = true;
       window.clearTimeout(timeout);
       video.classList.add('is-visible');
       window.cancelAnimationFrame(animationFrame);
@@ -415,7 +390,7 @@
       // Keep the controls honest if the browser or device interrupts playback.
       // Our own pause/finish actions already update state before pausing video.
       if (renderer === 'video' && state === 'playing' && video.paused && !video.ended) {
-        if (document.hidden) pause(true);
+        if (document.hidden) pauseForVisibility();
         else startImageAnimation();
       }
     });
@@ -451,7 +426,7 @@
           // A one-shot image cannot pause. Restart from its first frame when
           // visible again, instead of returning to a film that ran off-screen.
           prepareArrival();
-        } else if (state === 'playing') pause(true);
+        } else if (state === 'playing') pauseForVisibility();
       } else if (awaitingArrival) {
         welcomeArrival();
       } else if (resumeWhenVisible && state === 'paused') {

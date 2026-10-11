@@ -87,7 +87,6 @@ body[data-colour='colour'][data-intro='paused'],body[data-colour='colour'][data-
 .caption-location{display:inline-flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.035em}
 .caption-location .icon{width:14px;height:14px}
 .animation-controls{display:flex;gap:23px;align-items:center}
-.play-symbol{font-size:17px;line-height:1}
 .skip-animation{color:var(--muted)}
 .hero-introduction{display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(36px,6vw,96px);align-items:center;padding-block:clamp(46px,5.7vw,86px) clamp(50px,6vw,92px)}
 .hero-introduction .eyebrow{margin-bottom:17px}

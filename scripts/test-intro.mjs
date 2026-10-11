@@ -48,7 +48,7 @@ function page(options = {}) {
   const root = element(html.match(/<html\b([^>]*)>/)[1]);
   const body = element(html.match(/<body\b([^>]*)>/)[1]);
   const elements = new Map();
-  const ids = ['hero-video', 'hero-poster', 'hero-animation', 'animation-toggle', 'animation-label', 'animation-skip', 'animation-status'];
+  const ids = ['hero-video', 'hero-poster', 'hero-animation', 'hero-title', 'animation-skip', 'animation-status'];
 
   function element(tag) {
     const attrs = attributes(tag);
@@ -225,7 +225,7 @@ function page(options = {}) {
   return {
     root, body, video, document, fetches, activeURLs, revokedURLs, initial,
     animation: elements.get('hero-animation'),
-    poster: elements.get('hero-poster'), toggle: elements.get('animation-toggle'), skip: elements.get('animation-skip'),
+    poster: elements.get('hero-poster'), title: elements.get('hero-title'), skip: elements.get('animation-skip'),
     start: () => vm.runInContext(main, context, { filename: 'public/main.js' }),
     async flush() { for (let turn = 0; turn < 18; turn += 1) await Promise.resolve(); },
     advance(milliseconds) {
@@ -285,7 +285,6 @@ test('mobile arrival is monochrome before scripts run and starts its image witho
   assert.equal(view.animation.hidden, false);
   assert.equal(view.fetches.length, 1);
   assert.equal(view.fetches[0].url, view.animation.dataset.fallbackSrc);
-  assert.equal(view.toggle.hidden, true);
   assert.equal(view.skip.hidden, false);
   assert.equal(view.video.playCalls, 0);
 });
@@ -395,51 +394,60 @@ test('colour follows the landing cue and the completed film resolves to its stil
   assert.equal(view.body.dataset.colour, 'mono');
   view.seek(3.4);
   assert.equal(view.body.dataset.colour, 'colour');
+  const readingFocus = {};
+  view.document.activeElement = readingFocus;
   view.end();
   assert.equal(view.body.dataset.intro, 'finished');
   assert.equal(view.video.classList.contains('is-visible'), false);
   assert.equal(view.poster.src, view.poster.dataset.colourDesktop);
+  assert.equal(view.document.activeElement, readingFocus, 'Completion must not move focus away from the visitor.');
 });
 
-test('Skip releases the film, restores focus and Replay restarts from monochrome', async () => {
-  const view = page({ width: 1440 });
-  view.start();
-  await view.flush();
-  view.seek(2);
-  view.skip.focus();
-  view.skip.click();
-  await view.flush();
-  assert.equal(view.body.dataset.colour, 'colour');
-  assert.equal(view.video.src, '');
-  assert.equal(view.skip.hidden, true);
-  assert.equal(view.document.activeElement, view.toggle);
-  view.toggle.click();
-  await view.flush();
-  assert.equal(view.body.dataset.colour, 'mono');
-  assert.equal(view.video.currentTime, 0);
-  assert.equal(view.video.paused, false);
-  assert.equal(view.skip.hidden, false);
+test('Skip releases either renderer, moves focus to the heading, and refresh starts again', async () => {
+  for (const width of [390, 1440]) {
+    const view = page({ width });
+    view.start();
+    await view.flush();
+    if (width === 390) view.frame(2000); else view.seek(2);
+    view.skip.focus();
+    view.skip.click();
+    await view.flush();
+    assert.equal(view.body.dataset.colour, 'colour');
+    assert.equal(view.video.src, '');
+    assert.equal(view.animation.src, '');
+    assert.equal(view.activeURLs.size, 0);
+    assert.equal(view.skip.hidden, true);
+    assert.equal(view.document.activeElement, view.title);
+    assert.equal(view.title.getAttribute('tabindex'), '-1');
+    const refreshed = page({ width, navigationType: 'reload' });
+    refreshed.start();
+    await refreshed.flush();
+    assert.equal(refreshed.body.dataset.colour, 'mono');
+    assert.equal(refreshed.body.dataset.intro, 'playing');
+    assert.equal(refreshed.skip.hidden, false);
+    if (width === 390) assert.match(refreshed.animation.src, /^blob:/);
+    else assert.equal(refreshed.video.paused, false);
+  }
 });
 
-test('an explicit Pause survives backgrounding and only resumes when requested', async () => {
-  const view = page({ width: 1440 });
-  view.start();
-  await view.flush();
-  view.seek(1.5);
-  view.toggle.click();
-  await view.flush();
-  const requests = view.video.playCalls;
-  view.visibility(false);
-  view.advance(30000);
-  view.visibility(true);
-  await view.flush();
-  assert.equal(view.video.playCalls, requests);
-  assert.equal(view.video.paused, true);
-  assert.equal(view.body.dataset.intro, 'paused');
-  view.toggle.click();
-  await view.flush();
-  assert.equal(view.video.paused, false);
-  assert.equal(view.video.currentTime, 1.5);
+test('only Skip is rendered and absent Play controls cannot prevent automatic startup', async () => {
+  const controls = html.match(/<div class="animation-controls">([\s\S]*?)<\/div>/)?.[1];
+  assert(controls, 'The introduction must retain its Skip control.');
+  const labels = [...controls.matchAll(/<button\b[^>]*>([\s\S]*?)<\/button>/g)]
+    .map((match) => match[1].replace(/<[^>]*>/g, '').trim());
+  assert.deepEqual(labels, ['Skip animation']);
+  assert(!/\bid="(?:animation-toggle|animation-label)"/.test(html));
+  for (const width of [390, 1440]) {
+    const view = page({ width });
+    assert.equal(view.document.getElementById('animation-toggle'), null);
+    assert.equal(view.document.getElementById('animation-label'), null);
+    assert.equal(view.video.hasAttribute('controls'), false);
+    view.start();
+    await view.flush();
+    assert.equal(view.body.dataset.intro, 'playing');
+    assert.equal(view.body.dataset.colour, 'mono');
+    assert.equal(view.skip.hidden, false);
+  }
 });
 
 test('autoplay denial runs the same arrival as an image with honest controls and a colour cue', async () => {
@@ -451,19 +459,19 @@ test('autoplay denial runs the same arrival as an image with honest controls and
   assert.equal(view.video.src, '');
   assert.match(view.animation.src, /^blob:/);
   assert.equal(view.animation.hidden, false);
-  assert.equal(view.toggle.hidden, true, 'An animated image must not offer a non-working Pause button.');
   assert.equal(view.skip.hidden, false);
   assert.equal(view.fetches[0].url, view.animation.dataset.fallbackSrc);
   view.frame(3399);
   assert.equal(view.body.dataset.colour, 'mono');
   view.frame(1);
   assert.equal(view.body.dataset.colour, 'colour');
+  view.skip.focus();
   view.frame(Number(view.animation.dataset.durationMs) - 3400);
   assert.equal(view.body.dataset.intro, 'finished');
-  assert.equal(view.toggle.hidden, false);
   assert.equal(view.skip.hidden, true);
   assert.equal(view.animation.src, '');
   assert.equal(view.activeURLs.size, 0);
+  assert.equal(view.document.activeElement, view.title, 'A disappearing focused Skip control must return focus to the heading.');
 });
 
 test('a film that never loads or stalls starts the image fallback instead of skipping the arrival', async () => {
@@ -545,21 +553,20 @@ test('unexpected native pause or error switches to the image and ignores stale v
   }
 });
 
-test('an actual image failure leaves a usable colour page and permits a video retry', async () => {
+test('an actual image failure leaves a usable colour page and a refresh can try again', async () => {
   for (const failure of [{ fetchMode: 'reject' }, { imageMode: 'reject' }]) {
     const view = page({ width: 1440, playMode: 'reject', ...failure });
     view.start();
     await view.flush();
     assert.equal(view.body.dataset.intro, 'finished');
     assert.equal(view.body.dataset.colour, 'colour');
-    assert.equal(view.toggle.hidden, false);
     assert.equal(view.skip.hidden, true);
     assert.equal(view.activeURLs.size, 0);
-    view.video.playMode = 'ready';
-    view.toggle.click();
-    await view.flush();
-    assert.equal(view.video.paused, false);
-    assert.equal(view.body.dataset.colour, 'mono');
+    const refreshed = page({ width: 1440, navigationType: 'reload' });
+    refreshed.start();
+    await refreshed.flush();
+    assert.equal(refreshed.video.paused, false);
+    assert.equal(refreshed.body.dataset.colour, 'mono');
   }
 });
 
@@ -583,19 +590,20 @@ test('Skip or page departure cancels pending image work and late completion cann
       assert.equal(view.body.dataset.colour, leave === 'skip' ? 'colour' : 'mono');
       assert.equal(view.animation.src, '');
       assert.equal(view.activeURLs.size, 0);
-      assert.equal(view.toggle.hidden, false);
+      assert.equal(view.skip.hidden, leave === 'skip');
     }
   }
 });
 
-test('image replay reuses the downloaded film while starting a fresh, cleaned-up image URL', async () => {
+test('a restored arrival reuses the downloaded film with a fresh, cleaned-up image URL', async () => {
   const view = page();
   view.start();
   await view.flush();
   const firstURL = view.animation.src;
   view.frame(Number(view.animation.dataset.durationMs));
   assert.equal(view.revokedURLs.has(firstURL), true);
-  view.toggle.click();
+  view.pageHide(true);
+  view.pageShow(true);
   await view.flush();
   assert.notEqual(view.animation.src, firstURL);
   assert.match(view.animation.src, /^blob:/);
@@ -674,7 +682,6 @@ test('a late image download or load remains monochrome and starts when ready wit
     await view.flush();
     assert.equal(view.body.dataset.colour, 'mono');
     assert.equal(view.body.dataset.intro, 'playing');
-    assert.equal(view.toggle.hidden, true);
     assert.equal(view.skip.hidden, false);
     assert.equal(view.fetches[0].signal.aborted, false);
     if (pending === 'fetch') view.fetches[0].resolve(); else view.imageReady();
