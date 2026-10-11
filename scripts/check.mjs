@@ -45,7 +45,7 @@ const home = await readFile(path.join(root, 'index.html'), 'utf8');
 assert(!/<video[^>]*\ssrc\s*=/.test(home), 'Video must not download until preferences are checked.');
 assert(/<video[^>]*\bmuted\b/.test(home), 'Hero video must be muted.');
 assert(/<video[^>]*\bplaysinline\b/.test(home), 'Hero video must play inline.');
-for (const match of home.matchAll(/data-(?:desktop-src|mobile-src|opening-desktop|opening-mobile|colour-desktop|colour-mobile)="([^"]+)"/g)) {
+for (const match of home.matchAll(/data-(?:desktop-src|mobile-src|opening-desktop|opening-mobile|colour-desktop|colour-mobile|fallback-src)="([^"]+)"/g)) {
   assert(files.includes(path.join(root, match[1])), `Missing media ${match[1]}`);
 }
 for (const file of files.filter((item) => item.endsWith('.js'))) {
@@ -55,5 +55,7 @@ const desktop = await stat(path.join(root, 'assets/finch-arrival-1280.mp4'));
 const mobile = await stat(path.join(root, 'assets/finch-arrival-960.mp4'));
 assert(desktop.size < 1_000_000, 'Desktop video exceeds 1 MB budget.');
 assert(mobile.size < 600_000, 'Mobile video exceeds 600 KB budget.');
+const fallback = await stat(path.join(root, 'assets/finch-arrival-fallback-800.webp'));
+assert(fallback.size < 800_000, 'Animation fallback exceeds 800 KB budget.');
 execFileSync(process.execPath, ['--test', 'scripts/test-intro.mjs'], { stdio: 'inherit' });
 console.log(`Checked ${files.length} files: page structure, local links, media references, structured data, JavaScript syntax and video budgets.`);

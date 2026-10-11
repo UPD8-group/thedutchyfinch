@@ -51,10 +51,15 @@ The original supplied video is 9,614,135 bytes, 1920 × 1080 and approximately e
 | --- | --- | ---: | ---: |
 | Desktop MP4 | 1280 × 720 | 779,637 | 91.9% |
 | Mobile MP4 | 960 × 540 | 445,457 | 95.4% |
+| Animated WebP fallback | 800 × 450 | 747,908 | 92.2% |
 
 Only one video source is selected, based on the initial screen width. Each opening starts automatically in monochrome, with pause, resume, skip and replay controls. The opening artwork is visible while the script and video load, without flashing the full-colour frame first. Colour begins returning at 3.4 seconds, matching the bird's landing. The full artwork remains visible at its original 16:9 aspect ratio.
 
-Visitors who prefer reduced motion or use a supported data-saving mode get the full-colour still without an automatic video download. Autoplay failures fall back to the same still, with a replay control. Pages opened in the background wait until visible to begin; interrupted playback resumes when the visitor returns, while an explicit pause is respected. Returning through the browser's back/forward cache begins a fresh arrival. With JavaScript disabled, the full-colour page and navigation remain available.
+Video startup uses native autoplay, muted inline playback and a visible monochrome poster. If the browser refuses or interrupts video playback, or no first frame arrives within four seconds, the same clip plays as an animated WebP. This alternate renderer does not call the video playback API. It is fetched only when needed, cached in memory and assigned a fresh object URL for each playback so Replay starts at frame one. The 8,083 ms clip plays once; its 88 encoded frames preserve the original flight and colour reveal. After playback begins, a stalled video has a twelve-second deadline before trying the alternate renderer.
+
+The animated-image renderer offers Skip, then Replay after completion. It does not present a Pause button because an ordinary animated image cannot pause its internal timeline. Colour follows the same landing cue; timers and image URLs are cleared on Skip, failure and departure. If both renderers fail, the full-colour still remains usable.
+
+Visitors who prefer reduced motion or use a supported data-saving mode get the full-colour still and a Play control without an automatic animation download. Pages opened in the background wait until visible to begin; native video resumes at its previous position when the visitor returns, while an explicit pause is respected. The one-shot image restarts from the beginning after backgrounding. Returning through the browser's back/forward cache begins a fresh arrival. With JavaScript disabled, the full-colour page and navigation remain available.
 
 The original large video and GIF are intentionally excluded from this repository. The brand artwork and animation were supplied by the site requester for this project.
 

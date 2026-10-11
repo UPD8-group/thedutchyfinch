@@ -22,10 +22,12 @@ class Events {
     this.listeners.set(type, (this.listeners.get(type) || []).filter((entry) => entry.callback !== callback));
   }
   emit(type, detail = {}) {
+    const event = { type, target: this, ...detail };
     for (const entry of [...(this.listeners.get(type) || [])]) {
       if (entry.once) this.removeEventListener(type, entry.callback);
-      entry.callback({ type, target: this, ...detail });
+      entry.callback(event);
     }
+    if (typeof this[`on${type}`] === 'function') this[`on${type}`](event);
   }
 }
 
@@ -38,11 +40,15 @@ function page(options = {}) {
   let sequence = 0;
   const timers = new Map();
   const frames = new Map();
+  const imageLoads = [];
+  const fetches = [];
+  const activeURLs = new Set();
+  const revokedURLs = new Set();
   const document = new Events();
   const root = element(html.match(/<html\b([^>]*)>/)[1]);
   const body = element(html.match(/<body\b([^>]*)>/)[1]);
   const elements = new Map();
-  const ids = ['hero-video', 'hero-poster', 'animation-toggle', 'animation-label', 'animation-skip', 'animation-status'];
+  const ids = ['hero-video', 'hero-poster', 'hero-animation', 'animation-toggle', 'animation-label', 'animation-skip', 'animation-status'];
 
   function element(tag) {
     const attrs = attributes(tag);
@@ -71,10 +77,24 @@ function page(options = {}) {
     node.style = {};
     node.focus = () => { document.activeElement = node; };
     node.click = () => node.emit('click');
-    for (const property of ['src', 'srcset', 'preload']) {
+    for (const property of ['src', 'srcset', 'preload', 'poster']) {
       Object.defineProperty(node, property, {
         get: () => attrs[property] || '',
-        set: (value) => { attrs[property] = String(value); },
+        set(value) {
+          attrs[property] = String(value);
+          if (property !== 'src' || attrs.id !== 'hero-animation' || !value) return;
+          node.complete = false;
+          const deliver = (type, force = false) => {
+            if (!force && node.src !== value) return;
+            node.complete = true;
+            node.naturalWidth = type === 'load' ? 800 : 0;
+            node.emit(type);
+          };
+          imageLoads.push({ source: value, deliver });
+          if (options.imageMode !== 'pending') {
+            queueMicrotask(() => deliver(options.imageMode === 'reject' ? 'error' : 'load'));
+          }
+        },
       });
     }
     return node;
@@ -96,7 +116,7 @@ function page(options = {}) {
   const video = elements.get('hero-video');
   Object.assign(video, {
     paused: true, ended: false, currentTime: 0, readyState: 0,
-    playCalls: 0, playMode: options.playMode || 'ready',
+    playCalls: 0, playMode: options.playMode || 'ready', playObservations: [],
   });
   video.pause = () => {
     const wasPlaying = !video.paused;
@@ -110,6 +130,10 @@ function page(options = {}) {
   };
   video.play = () => {
     video.playCalls += 1;
+    video.playObservations.push({
+      visible: video.classList.contains('is-visible'), poster: video.poster,
+      muted: video.muted, inline: video.playsInline,
+    });
     if (video.playMode === 'reject') return Promise.reject(new DOMException('Autoplay denied', 'NotAllowedError'));
     video.paused = false;
     if (video.playMode === 'pending') return new Promise(() => {});
@@ -126,9 +150,35 @@ function page(options = {}) {
 
   const queries = new Map();
   const storage = new Map(options.seen ? [['dutchy-finch-intro-v1', 'seen']] : []);
+  class ImageURL extends URL {
+    static createObjectURL(blob) {
+      assert(blob instanceof Blob, 'The image URL must be backed by its downloaded blob.');
+      const url = `blob:https://example.test/intro-${++sequence}`;
+      activeURLs.add(url);
+      return url;
+    }
+    static revokeObjectURL(url) {
+      activeURLs.delete(url);
+      revokedURLs.add(url);
+    }
+  }
   const window = Object.assign(new Events(), {
     document, navigator: { connection: { saveData: Boolean(options.saveData) } },
-    console, URL, DOMException, queueMicrotask,
+    console, URL: ImageURL, DOMException, Blob, AbortController, queueMicrotask,
+    fetch(url, init = {}) {
+      return new Promise((resolve, reject) => {
+        const request = {
+          url, signal: init.signal,
+          resolve: () => resolve({ ok: true, blob: async () => new Blob(['animated image'], { type: 'image/webp' }) }),
+          reject: () => reject(new TypeError('Image download failed')),
+        };
+        fetches.push(request);
+        init.signal?.addEventListener('abort', () => {
+          if (!options.fetchIgnoresAbort) reject(new DOMException('Download aborted', 'AbortError'));
+        }, { once: true });
+        if (options.fetchMode !== 'pending') queueMicrotask(options.fetchMode === 'reject' ? request.reject : request.resolve);
+      });
+    },
     performance: { now: () => now, getEntriesByType: () => [{ type: options.navigationType || 'navigate' }] },
     matchMedia(query) {
       if (!queries.has(query)) {
@@ -164,10 +214,11 @@ function page(options = {}) {
   vm.runInContext(bootstrap, context, { filename: 'index.html bootstrap' });
 
   return {
-    root, body, video, document,
+    root, body, video, document, fetches, activeURLs, revokedURLs,
+    animation: elements.get('hero-animation'),
     poster: elements.get('hero-poster'), toggle: elements.get('animation-toggle'), skip: elements.get('animation-skip'),
     start: () => vm.runInContext(main, context, { filename: 'public/main.js' }),
-    async flush() { for (let turn = 0; turn < 6; turn += 1) await Promise.resolve(); },
+    async flush() { for (let turn = 0; turn < 18; turn += 1) await Promise.resolve(); },
     advance(milliseconds) {
       const target = now + milliseconds;
       for (let count = 0; count < 100; count += 1) {
@@ -179,6 +230,14 @@ function page(options = {}) {
       }
       assert.fail('Unbounded introduction timer scheduling.');
     },
+    frame(milliseconds = 0) {
+      this.advance(milliseconds);
+      for (const [id, callback] of [...frames]) {
+        if (!frames.delete(id)) continue;
+        callback(now);
+      }
+    },
+    imageReady(force = false) { imageLoads.at(-1)?.deliver('load', force); },
     seek(seconds) { video.currentTime = seconds; video.emit('timeupdate'); },
     visibility(visible) {
       document.hidden = !visible;
@@ -186,6 +245,7 @@ function page(options = {}) {
       document.emit('visibilitychange');
     },
     pageShow(persisted) { window.emit('pageshow', { persisted }); },
+    pageHide(persisted = false) { window.emit('pagehide', { persisted }); },
     end() { video.ended = true; video.paused = true; video.emit('ended'); },
   };
 }
@@ -200,6 +260,10 @@ test('mobile arrival prepares monochrome before its first playback frame', async
   assert.equal(view.body.dataset.colour, 'mono');
   assert.equal(view.video.src, view.video.dataset.mobileSrc);
   assert.equal(view.poster.src, view.poster.dataset.openingMobile);
+  assert.equal(view.video.hasAttribute('autoplay'), true);
+  assert.deepEqual(view.video.playObservations[0], {
+    visible: true, poster: view.poster.dataset.openingMobile, muted: true, inline: true,
+  }, 'The video must already be visible with its opening poster when playback is requested.');
   await view.flush();
   assert.equal(view.video.playCalls, 1);
   assert.equal(view.video.paused, false);
@@ -256,6 +320,7 @@ test('motion and data preferences show colour without an automatic video request
     await view.flush();
     assert.equal(view.video.src, '');
     assert.equal(view.video.playCalls, 0);
+    assert.equal(view.fetches.length, 0);
     assert.equal(view.body.dataset.colour, 'colour');
     assert.equal(view.poster.src, view.poster.dataset.colourMobile);
   }
@@ -316,32 +381,49 @@ test('an explicit Pause survives backgrounding and only resumes when requested',
   assert.equal(view.video.currentTime, 1.5);
 });
 
-test('autoplay denial leaves a usable colour page and a working manual replay', async () => {
+test('autoplay denial runs the same arrival as an image with honest controls and a colour cue', async () => {
   const view = page({ playMode: 'reject' });
   view.start();
   await view.flush();
-  assert.equal(view.body.dataset.colour, 'colour');
-  assert.equal(view.body.dataset.intro, 'finished');
-  assert.equal(view.video.src, '');
-  assert.equal(view.skip.hidden, true);
-  view.video.playMode = 'ready';
-  view.toggle.click();
-  await view.flush();
   assert.equal(view.body.dataset.colour, 'mono');
-  assert.equal(view.video.paused, false);
+  assert.equal(view.body.dataset.intro, 'playing');
+  assert.equal(view.video.src, '');
+  assert.match(view.animation.src, /^blob:/);
+  assert.equal(view.animation.hidden, false);
+  assert.equal(view.toggle.hidden, true, 'An animated image must not offer a non-working Pause button.');
+  assert.equal(view.skip.hidden, false);
+  assert.equal(view.fetches[0].url, view.animation.dataset.fallbackSrc);
+  view.frame(3399);
+  assert.equal(view.body.dataset.colour, 'mono');
+  view.frame(1);
+  assert.equal(view.body.dataset.colour, 'colour');
+  view.frame(Number(view.animation.dataset.durationMs) - 3400);
+  assert.equal(view.body.dataset.intro, 'finished');
+  assert.equal(view.toggle.hidden, false);
+  assert.equal(view.skip.hidden, true);
+  assert.equal(view.animation.src, '');
+  assert.equal(view.activeURLs.size, 0);
 });
 
-test('a film that never loads or stalls cannot leave the page monochrome indefinitely', async () => {
+test('a film that never loads or stalls starts the image fallback instead of skipping the arrival', async () => {
   for (const playMode of ['pending', 'ready']) {
     const view = page({ playMode });
     view.start();
     await view.flush();
     if (playMode === 'ready') view.video.emit('waiting');
-    view.advance(30000);
-    await view.flush();
+    // Let network/image microtasks run between deadlines, as the browser does.
+    // The introduction must find a working alternative within this bound.
+    for (let elapsed = 0; elapsed < 30000 && !view.animation.src; elapsed += 1000) {
+      view.advance(1000);
+      await view.flush();
+    }
+    assert.equal(view.body.dataset.colour, 'mono');
+    assert.equal(view.body.dataset.intro, 'playing');
+    assert.equal(view.video.src, '');
+    assert.match(view.animation.src, /^blob:/);
+    view.frame(Number(view.animation.dataset.durationMs));
     assert.equal(view.body.dataset.colour, 'colour');
     assert.equal(view.body.dataset.intro, 'finished');
-    assert.equal(view.video.src, '');
   }
 });
 
@@ -374,4 +456,115 @@ test('automatic background suspension resumes at the same place without restarti
   assert.equal(view.video.paused, false);
   assert.equal(view.video.currentTime, 1.5);
   assert.equal(view.body.dataset.colour, 'mono');
+});
+
+test('unexpected native pause or error switches to the image and ignores stale video events', async () => {
+  for (const failure of ['pause', 'error']) {
+    const view = page({ playMode: failure === 'pause' ? 'pending' : 'ready' });
+    view.start();
+    await view.flush();
+    if (failure === 'pause') view.video.pause();
+    else { view.video.error = { code: 3 }; view.video.emit('error'); }
+    await view.flush();
+    assert.match(view.animation.src, /^blob:/);
+    assert.equal(view.body.dataset.colour, 'mono');
+    const source = view.animation.src;
+    view.video.currentTime = 9;
+    for (const event of ['playing', 'timeupdate', 'waiting', 'ended', 'error', 'pause']) view.video.emit(event);
+    await view.flush();
+    assert.equal(view.animation.src, source);
+    assert.equal(view.body.dataset.intro, 'playing');
+    assert.equal(view.body.dataset.colour, 'mono');
+    assert.equal(view.fetches.length, 1);
+    view.frame(Number(view.animation.dataset.durationMs));
+    assert.equal(view.body.dataset.intro, 'finished');
+  }
+});
+
+test('failed or stuck image fallback leaves a usable colour page and permits a video retry', async () => {
+  for (const failure of [{ fetchMode: 'reject' }, { imageMode: 'reject' }, { imageMode: 'pending' }]) {
+    const view = page({ playMode: 'reject', ...failure });
+    view.start();
+    await view.flush();
+    if (failure.imageMode === 'pending') { view.advance(30000); await view.flush(); }
+    assert.equal(view.body.dataset.intro, 'finished');
+    assert.equal(view.body.dataset.colour, 'colour');
+    assert.equal(view.toggle.hidden, false);
+    assert.equal(view.skip.hidden, true);
+    assert.equal(view.activeURLs.size, 0);
+    view.video.playMode = 'ready';
+    view.toggle.click();
+    await view.flush();
+    assert.equal(view.video.paused, false);
+    assert.equal(view.body.dataset.colour, 'mono');
+  }
+});
+
+test('Skip or page departure cancels pending image work and late completion cannot revive it', async () => {
+  for (const pending of ['fetch', 'image']) {
+    for (const leave of ['skip', 'pagehide']) {
+      const view = page({
+        playMode: 'reject', fetchMode: pending === 'fetch' ? 'pending' : 'ready',
+        fetchIgnoresAbort: true, imageMode: pending === 'image' ? 'pending' : 'ready',
+      });
+      view.start();
+      await view.flush();
+      if (leave === 'skip') view.skip.click(); else view.pageHide();
+      if (pending === 'fetch') {
+        assert.equal(view.fetches[0].signal.aborted, true);
+        view.fetches[0].resolve();
+      } else view.imageReady(true);
+      await view.flush();
+      view.frame(20000);
+      assert.equal(view.body.dataset.intro, 'finished');
+      assert.equal(view.body.dataset.colour, 'colour');
+      assert.equal(view.animation.src, '');
+      assert.equal(view.activeURLs.size, 0);
+      assert.equal(view.toggle.hidden, false);
+    }
+  }
+});
+
+test('image replay reuses the downloaded film while starting a fresh, cleaned-up image URL', async () => {
+  const view = page({ playMode: 'reject' });
+  view.start();
+  await view.flush();
+  const firstURL = view.animation.src;
+  view.frame(Number(view.animation.dataset.durationMs));
+  assert.equal(view.revokedURLs.has(firstURL), true);
+  view.toggle.click();
+  await view.flush();
+  assert.notEqual(view.animation.src, firstURL);
+  assert.match(view.animation.src, /^blob:/);
+  assert.equal(view.activeURLs.size, 1);
+  assert.equal(view.fetches.length, 1);
+  assert.equal(view.video.playCalls, 1);
+  assert.equal(view.body.dataset.colour, 'mono');
+  view.frame(3399);
+  assert.equal(view.body.dataset.colour, 'mono');
+  view.skip.click();
+  assert.equal(view.activeURLs.size, 0);
+});
+
+test('an image arrival clears while hidden and restarts from its beginning when visible', async () => {
+  const view = page({ playMode: 'reject' });
+  view.start();
+  await view.flush();
+  const firstURL = view.animation.src;
+  view.frame(4000);
+  view.visibility(false);
+  await view.flush();
+  assert.equal(view.animation.src, '');
+  assert.equal(view.activeURLs.size, 0);
+  view.advance(30000);
+  view.visibility(true);
+  await view.flush();
+  assert.match(view.animation.src, /^blob:/);
+  assert.notEqual(view.animation.src, firstURL);
+  assert.equal(view.body.dataset.colour, 'mono');
+  assert.equal(view.fetches.length, 1);
+  view.frame(3399);
+  assert.equal(view.body.dataset.colour, 'mono');
+  view.frame(1);
+  assert.equal(view.body.dataset.colour, 'colour');
 });

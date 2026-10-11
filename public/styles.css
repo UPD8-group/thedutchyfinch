@@ -79,7 +79,8 @@ body[data-colour='colour'][data-intro='paused'],body[data-colour='colour'][data-
 .hero{padding-top:24px}
 .hero-frame{max-width:1360px;margin:0 auto;width:calc(100% - 48px);position:relative}
 .hero-artwork{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#b9b6a3;border:1px solid #3d44361c;border-radius:3px}
-.hero-poster,.hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.hero-poster,.hero-video,.hero-animation{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.hero-animation{pointer-events:none}
 .hero-video{opacity:0;pointer-events:none}
 .hero-video.is-visible{opacity:1}
 .artwork-caption{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:52px;border-bottom:1px solid var(--line);color:var(--muted)}

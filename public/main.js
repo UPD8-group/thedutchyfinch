@@ -58,6 +58,7 @@
   function initialiseIntroduction() {
     const video = document.getElementById('hero-video');
     const poster = document.getElementById('hero-poster');
+    const imageAnimation = document.getElementById('hero-animation');
     const toggle = document.getElementById('animation-toggle');
     const label = document.getElementById('animation-label');
     const skip = document.getElementById('animation-skip');
@@ -73,6 +74,7 @@
     }
 
     const COLOUR_CUE = 3.4;
+    const START_TIMEOUT = 4000;
     const LOAD_TIMEOUT = 12000;
     const narrowScreen = window.matchMedia('(max-width: 700px)');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -90,6 +92,13 @@
     let animationFrame = 0;
     let awaitingArrival = false;
     let resumeWhenVisible = false;
+    let renderer = 'video';
+    let hasVideoFrame = false;
+    let hasPlayed = false;
+    let useImageFallback = false;
+    let imageBlob = null;
+    let imageURL = '';
+    let imageRequest = null;
 
     const allowsAutoplay = () => !reducedMotion.matches && !(connection && connection.saveData);
 
@@ -136,10 +145,15 @@
       body.dataset.intro = nextState;
       const action = nextState === 'playing' ? 'Pause animation'
         : nextState === 'paused' ? 'Resume animation'
-        : nextState === 'waiting' ? 'Play animation' : 'Replay animation';
+        : nextState === 'waiting' || !hasPlayed ? 'Play animation' : 'Replay animation';
       label.textContent = action;
       toggle.setAttribute('aria-label', action);
+      // Animated images have no native pause API. Skip remains available.
+      toggle.hidden = renderer === 'image' && nextState === 'playing';
       if (skip) skip.hidden = !['playing', 'paused', 'waiting'].includes(nextState);
+      if (toggle.hidden && document.activeElement === toggle && skip) {
+        skip.focus({ preventScroll: true });
+      }
     }
 
     function clearTimers() {
@@ -149,13 +163,28 @@
       animationFrame = 0;
     }
 
+    function releaseImage() {
+      if (imageRequest) imageRequest.abort();
+      imageRequest = null;
+      if (imageAnimation) {
+        imageAnimation.onload = null;
+        imageAnimation.onerror = null;
+        imageAnimation.hidden = true;
+        imageAnimation.removeAttribute('src');
+      }
+      if (imageURL) URL.revokeObjectURL(imageURL);
+      imageURL = '';
+    }
+
     function finish(message = '', releaseSource = false) {
       operation += 1;
       awaitingArrival = false;
       resumeWhenVisible = false;
       clearTimers();
+      releaseImage();
       const skipHadFocus = skip && document.activeElement === skip;
       setState('finished');
+      video.autoplay = false;
       video.pause();
       video.classList.remove('is-visible');
       setColour('colour');
@@ -175,25 +204,110 @@
       const currentOperation = operation;
       timeout = window.setTimeout(() => {
         if (currentOperation === operation && state === 'playing') {
-          finish('The full-colour website is ready. You can try the animation again.', true);
+          if (renderer === 'video') startImageAnimation();
+          else {
+            useImageFallback = false;
+            imageBlob = null;
+            finish('The full-colour website is ready. You can try the animation again.', true);
+          }
         }
-      }, LOAD_TIMEOUT);
+      }, renderer === 'video' && !hasVideoFrame ? START_TIMEOUT : LOAD_TIMEOUT);
     }
 
     function checkColourCue() {
-      if (state === 'playing' && video.currentTime >= COLOUR_CUE && colour !== 'colour') {
+      if (renderer === 'video' && state === 'playing' && video.currentTime >= COLOUR_CUE && colour !== 'colour') {
         setColour('colour');
       }
     }
 
     function followPlayback() {
       checkColourCue();
-      if (state === 'playing') animationFrame = window.requestAnimationFrame(followPlayback);
+      if (renderer === 'video' && state === 'playing') animationFrame = window.requestAnimationFrame(followPlayback);
+    }
+
+    async function startImageAnimation() {
+      if (renderer === 'image') return;
+      const source = imageAnimation && imageAnimation.dataset.fallbackSrc;
+      if (!source) {
+        finish('The full-colour website is ready. Select play to watch the animation.', true);
+        return;
+      }
+
+      const currentOperation = ++operation;
+      clearTimers();
+      releaseImage();
+      renderer = 'image';
+      useImageFallback = true;
+      resumeWhenVisible = false;
+      setState('playing');
+      video.autoplay = false;
+      video.pause();
+      video.classList.remove('is-visible');
+      if (sourceAssigned) {
+        video.removeAttribute('src');
+        video.preload = 'none';
+        sourceAssigned = false;
+        video.load();
+      }
+      setColour('mono');
+      announce('The finch is arriving. You can skip the animation.');
+      armTimeout();
+
+      try {
+        if (!imageBlob) {
+          const controller = new AbortController();
+          imageRequest = controller;
+          const response = await fetch(source, { signal: controller.signal });
+          if (!response.ok) throw new Error('Animation unavailable');
+          const blob = await response.blob();
+          if (currentOperation !== operation) return;
+          imageBlob = blob;
+          imageRequest = null;
+        }
+        if (currentOperation !== operation || state !== 'playing') return;
+
+        // Each playback gets a new image resource identity, so a cached clip
+        // starts at frame one. Its downloaded bytes are reused for Replay.
+        imageURL = URL.createObjectURL(imageBlob);
+        imageAnimation.onload = () => {
+          if (currentOperation !== operation || state !== 'playing') return;
+          window.clearTimeout(timeout);
+          hasPlayed = true;
+          imageAnimation.hidden = false;
+          revealPoster();
+          const startedAt = performance.now();
+          const duration = Number(imageAnimation.dataset.durationMs) || 8083;
+          const followImage = () => {
+            if (currentOperation !== operation || state !== 'playing') return;
+            const elapsed = performance.now() - startedAt;
+            if (elapsed >= COLOUR_CUE * 1000 && colour !== 'colour') setColour('colour');
+            if (elapsed >= duration) {
+              finish('The finch has landed. The website is now in colour.');
+            } else animationFrame = window.requestAnimationFrame(followImage);
+          };
+          followImage();
+        };
+        imageAnimation.onerror = () => {
+          if (currentOperation !== operation) return;
+          useImageFallback = false;
+          imageBlob = null;
+          finish('The full-colour website is ready. You can try the animation again.', true);
+        };
+        imageAnimation.src = imageURL;
+      } catch (_) {
+        if (currentOperation !== operation) return;
+        useImageFallback = false;
+        finish('The full-colour website is ready. You can try the animation again.', true);
+      }
     }
 
     function requestPlayback() {
       const currentOperation = ++operation;
       setState('playing');
+      video.autoplay = true;
+      video.poster = narrowScreen.matches ? poster.dataset.openingMobile : poster.dataset.openingDesktop;
+      // Be visible before requesting playback, with the monochrome poster ready.
+      video.classList.add('is-visible');
       armTimeout();
       try {
         const playRequest = video.play();
@@ -201,13 +315,15 @@
           playRequest.catch(() => {
             // Ignore promises cancelled by the visitor pausing or skipping.
             if (currentOperation === operation && state === 'playing') {
-              finish('The full-colour website is ready. Select replay to watch the animation.', true);
+              if (document.hidden) pause(true);
+              else startImageAnimation();
             }
           });
         }
       } catch (_) {
         if (currentOperation === operation) {
-          finish('The full-colour website is ready. Select replay to watch the animation.', true);
+          if (document.hidden) pause(true);
+          else startImageAnimation();
         }
       }
     }
@@ -217,9 +333,17 @@
       awaitingArrival = false;
       resumeWhenVisible = false;
       clearTimers();
+      releaseImage();
+      renderer = 'video';
+      hasVideoFrame = false;
+      video.autoplay = false;
       video.pause();
       video.classList.remove('is-visible');
 
+      if (useImageFallback) {
+        startImageAnimation();
+        return;
+      }
       if (!videoSource) {
         finish('The full-colour website is ready.');
         return;
@@ -247,11 +371,13 @@
       resumeWhenVisible = forVisibility;
       clearTimers();
       setState('paused');
+      video.autoplay = false;
       video.pause();
       announce('Animation paused.');
     }
 
     toggle.addEventListener('click', () => {
+      if (renderer === 'image' && state === 'playing') return;
       if (state === 'playing') pause();
       else if (state === 'paused') {
         resumeWhenVisible = false;
@@ -269,10 +395,12 @@
     }
 
     video.addEventListener('playing', () => {
-      if (state !== 'playing') {
+      if (renderer !== 'video' || state !== 'playing') {
         video.pause();
         return;
       }
+      hasVideoFrame = true;
+      hasPlayed = true;
       window.clearTimeout(timeout);
       video.classList.add('is-visible');
       window.cancelAnimationFrame(animationFrame);
@@ -282,17 +410,20 @@
     video.addEventListener('pause', () => {
       // Keep the controls honest if the browser or device interrupts playback.
       // Our own pause/finish actions already update state before pausing video.
-      if (state === 'playing' && video.paused && !video.ended) pause(document.hidden);
+      if (renderer === 'video' && state === 'playing' && video.paused && !video.ended) {
+        if (document.hidden) pause(true);
+        else startImageAnimation();
+      }
     });
     video.addEventListener('waiting', () => {
-      if (state === 'playing') armTimeout();
+      if (renderer === 'video' && state === 'playing') armTimeout();
     });
     video.addEventListener('ended', () => {
-      if (state === 'playing') finish('The finch has landed. The website is now in colour.');
+      if (renderer === 'video' && state === 'playing') finish('The finch has landed. The website is now in colour.');
     });
     video.addEventListener('error', () => {
-      if (video.error && sourceAssigned && (state === 'playing' || state === 'paused')) {
-        finish('The full-colour website is ready. You can try the animation again.', true);
+      if (renderer === 'video' && video.error && sourceAssigned && state === 'playing') {
+        startImageAnimation();
       }
     });
 
@@ -324,7 +455,14 @@
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        if (state === 'playing') pause(true);
+        if (state === 'playing' && renderer === 'image') {
+          // A one-shot image cannot pause. Restart from its first frame when
+          // visible again, instead of returning to a film that ran off-screen.
+          finish('', true);
+          awaitingArrival = true;
+          setState('waiting');
+          setColour('mono');
+        } else if (state === 'playing') pause(true);
       } else if (awaitingArrival) {
         welcomeArrival();
       } else if (resumeWhenVisible && state === 'paused') {
@@ -340,6 +478,7 @@
       // Back/forward cache restores skip normal script initialisation.
       if (event.persisted) welcomeArrival();
     });
+    window.addEventListener('pagehide', () => finish('', true));
 
     // Every opening gets the introduction; a previous visit never suppresses it.
     welcomeArrival();
