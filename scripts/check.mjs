@@ -48,7 +48,9 @@ assert(/<video[^>]*\bplaysinline\b/.test(home), 'Hero video must play inline.');
 for (const match of home.matchAll(/data-(?:desktop-src|mobile-src|opening-desktop|opening-mobile|colour-desktop|colour-mobile)="([^"]+)"/g)) {
   assert(files.includes(path.join(root, match[1])), `Missing media ${match[1]}`);
 }
-execFileSync(process.execPath, ['--check', 'public/main.js'], { stdio: 'inherit' });
+for (const file of files.filter((item) => item.endsWith('.js'))) {
+  execFileSync(process.execPath, ['--check', file], { stdio: 'inherit' });
+}
 const desktop = await stat(path.join(root, 'assets/finch-arrival-1280.mp4'));
 const mobile = await stat(path.join(root, 'assets/finch-arrival-960.mp4'));
 assert(desktop.size < 1_000_000, 'Desktop video exceeds 1 MB budget.');

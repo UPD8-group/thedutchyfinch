@@ -27,7 +27,9 @@
   })();
   </script>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/gallery.css">
   <script src="/main.js" defer></script>
+  <script src="/gallery.js" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -66,6 +68,7 @@
       </button>
       <nav id="site-nav" class="site-nav" aria-label="Main navigation">
         <a href="#our-story">Our story</a>
+        <a href="#gallery">Gallery</a>
         <a href="#specialities">Our specialities</a>
         <a href="#keep-in-touch">Keep in touch</a>
         <a href="#visit" class="nav-visit">Visit the shop <span aria-hidden="true">↗</span></a>
@@ -110,10 +113,12 @@
     <section class="story section-width section-space" id="our-story" aria-labelledby="story-title" data-colour-wash>
       <div class="story-visual">
         <div class="story-print">
-          <img src="/assets/dutchy-finch-artwork.webp" width="720" height="723" loading="lazy" decoding="async" alt="The Dutchy Finch's original artwork, with a finch, orange flowers and leafy green vines on aged paper.">
+          <a class="story-photo-link" href="/assets/gallery/stall-interior-1400.webp" data-gallery-item data-caption="A little look inside" aria-label="Open photograph: A little look inside">
+            <img src="/assets/gallery/stall-interior-600.webp" srcset="/assets/gallery/stall-interior-600.webp 600w, /assets/gallery/stall-interior-1400.webp 1400w" sizes="(max-width: 640px) calc(100vw - 87px), (max-width: 1000px) 40vw, 430px" width="600" height="600" loading="lazy" decoding="async" alt="Vintage furniture, glassware and decorative pieces in The Dutchy Finch stall.">
+            <span class="story-photo-hint" aria-hidden="true">A closer look <span>↗</span></span>
+          </a>
         </div>
-        <div class="story-stamp" aria-hidden="true"><span>BEAUTIFUL</span><span class="stamp-flower">✳</span><span>OLD THINGS</span></div>
-        <p class="image-note">A little character goes a long way.</p>
+        <p class="image-note">Our little corner of Dirty Janes.</p>
       </div>
       <div class="story-copy">
         <p class="eyebrow">THE DUTCHY FINCH</p>
@@ -122,6 +127,94 @@
         <p>The Dutchy Finch is a place to discover treasures with a story and pieces that make your soul smile.</p>
         <p>Antiques, vintage finds and beautiful old things. Some lovingly restyled or restored, others with a character all their own. Ready to find their place in a home like yours.</p>
         <a class="text-link" href="https://www.instagram.com/thedutchyfinch/" target="_blank" rel="noopener noreferrer">See what catches your eye on Instagram <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
+      </div>
+    </section>
+
+    <section class="gallery-section" id="gallery" aria-labelledby="gallery-title" data-colour-wash>
+      <div class="section-width gallery-inner">
+        <div class="gallery-heading">
+          <div><p class="eyebrow"><span aria-hidden="true">✳</span> FROM OUR LITTLE CORNER</p><h2 id="gallery-title">A few <em>lovely finds.</em></h2></div>
+          <p>Pieces with personality. Corners full of character.<br>A glimpse of the things that make us smile.</p>
+        </div>
+        <ul class="gallery-grid" id="gallery-grid" aria-label="Photographs of The Dutchy Finch’s finds and displays">
+          <li class="gallery-card">
+            <a href="/assets/gallery/vintage-writing-corner-1400.webp" data-gallery-item data-caption="Collected corners" aria-label="Open photograph: Collected corners">
+              <span class="gallery-photo"><img src="/assets/gallery/vintage-writing-corner-600.webp" width="450" height="600" loading="lazy" decoding="async" alt="A small writing table and patterned chair beneath framed flowers and a lit brass-coloured lamp."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>The stall</small><span class="gallery-photo-title">Collected corners</span></span><span class="gallery-number" aria-hidden="true">01</span></span>
+            </a>
+          </li>
+          <li class="gallery-card">
+            <a href="/assets/gallery/writing-desk-1400.webp" data-gallery-item data-caption="Made to be loved again" aria-label="Open photograph: Made to be loved again">
+              <span class="gallery-photo"><img src="/assets/gallery/writing-desk-600.webp" width="600" height="569" loading="lazy" decoding="async" alt="A dark writing desk with a natural timber top, curved legs and brass-coloured handles."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Restyled pieces</small><span class="gallery-photo-title">Made to be loved again</span></span><span class="gallery-number" aria-hidden="true">02</span></span>
+            </a>
+          </li>
+          <li class="gallery-card">
+            <a href="/assets/gallery/yellow-flower-wall-vase-1400.webp" data-gallery-item data-caption="Flowers in a frame" aria-label="Open photograph: Flowers in a frame">
+              <span class="gallery-photo"><img src="/assets/gallery/yellow-flower-wall-vase-600.webp" width="600" height="600" loading="lazy" decoding="async" alt="Yellow flowers in a round glass wall vase inside an ornate gold-coloured frame."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Art &amp; objects</small><span class="gallery-photo-title">Flowers in a frame</span></span><span class="gallery-number" aria-hidden="true">03</span></span>
+            </a>
+          </li>
+          <li class="gallery-card">
+            <a href="/assets/gallery/dark-chest-of-drawers-1400.webp" data-gallery-item data-caption="A new chapter" aria-label="Open photograph: A new chapter">
+              <span class="gallery-photo"><img src="/assets/gallery/dark-chest-of-drawers-600.webp" width="582" height="600" loading="lazy" decoding="async" alt="A dark chest of drawers with brass-coloured handles, a table lamp, flowers and framed art."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Restyled pieces</small><span class="gallery-photo-title">A new chapter</span></span><span class="gallery-number" aria-hidden="true">04</span></span>
+            </a>
+          </li>
+          <li class="gallery-card">
+            <a href="/assets/gallery/dining-room-display-1400.webp" data-gallery-item data-caption="Gathered around the table" aria-label="Open photograph: Gathered around the table">
+              <span class="gallery-photo"><img src="/assets/gallery/dining-room-display-600.webp" width="600" height="600" loading="lazy" decoding="async" alt="A timber dining table set with glassware and pink napkins, surrounded by antique cabinets."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>The stall</small><span class="gallery-photo-title">Gathered around the table</span></span><span class="gallery-number" aria-hidden="true">05</span></span>
+            </a>
+          </li>
+          <li class="gallery-card">
+            <a href="/assets/gallery/nesting-tables-1400.webp" data-gallery-item data-caption="Old pieces, fresh possibilities" aria-label="Open photograph: Old pieces, fresh possibilities">
+              <span class="gallery-photo"><img src="/assets/gallery/nesting-tables-600.webp" width="558" height="600" loading="lazy" decoding="async" alt="Three grey nesting tables with natural timber tops, styled beside green plants."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Restyled pieces</small><span class="gallery-photo-title">Old pieces, fresh possibilities</span></span><span class="gallery-number" aria-hidden="true">06</span></span>
+            </a>
+          </li>
+          <li class="gallery-card" data-gallery-extra>
+            <a href="/assets/gallery/display-cabinets-1400.webp" data-gallery-item data-caption="Treasures on display" aria-label="Open photograph: Treasures on display">
+              <span class="gallery-photo"><img src="/assets/gallery/display-cabinets-600.webp" width="600" height="600" loading="lazy" decoding="async" alt="Dark glass-fronted display cabinets beside a bronze-coloured rabbit sculpture."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>The stall</small><span class="gallery-photo-title">Treasures on display</span></span><span class="gallery-number" aria-hidden="true">07</span></span>
+            </a>
+          </li>
+          <li class="gallery-card" data-gallery-extra>
+            <a href="/assets/gallery/framed-portrait-1400.webp" data-gallery-item data-caption="Art with character" aria-label="Open photograph: Art with character">
+              <span class="gallery-photo"><img src="/assets/gallery/framed-portrait-600.webp" width="600" height="600" loading="lazy" decoding="async" alt="A blue-toned portrait of a woman in a straw hat, in a gold-coloured frame."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Art &amp; objects</small><span class="gallery-photo-title">Art with character</span></span><span class="gallery-number" aria-hidden="true">08</span></span>
+            </a>
+          </li>
+          <li class="gallery-card" data-gallery-extra>
+            <a href="/assets/gallery/leopard-print-boots-1400.webp" data-gallery-item data-caption="A little wild at heart" aria-label="Open photograph: A little wild at heart">
+              <span class="gallery-photo"><img src="/assets/gallery/leopard-print-boots-600.webp" width="600" height="600" loading="lazy" decoding="async" alt="A pair of leopard-print heeled ankle boots on display."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Vintage finds</small><span class="gallery-photo-title">A little wild at heart</span></span><span class="gallery-number" aria-hidden="true">09</span></span>
+            </a>
+          </li>
+          <li class="gallery-card" data-gallery-extra>
+            <a href="/assets/gallery/red-flower-wall-vase-1400.webp" data-gallery-item data-caption="Something unexpected" aria-label="Open photograph: Something unexpected">
+              <span class="gallery-photo"><img src="/assets/gallery/red-flower-wall-vase-600.webp" width="600" height="600" loading="lazy" decoding="async" alt="Red and white flowers in a glass wall vase mounted within a gold-coloured frame."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Art &amp; objects</small><span class="gallery-photo-title">Something unexpected</span></span><span class="gallery-number" aria-hidden="true">10</span></span>
+            </a>
+          </li>
+          <li class="gallery-card" data-gallery-extra>
+            <a href="/assets/gallery/floral-lined-drawers-1400.webp" data-gallery-item data-caption="Beauty in the details" aria-label="Open photograph: Beauty in the details">
+              <span class="gallery-photo"><img src="/assets/gallery/floral-lined-drawers-600.webp" width="531" height="600" loading="lazy" decoding="async" alt="Open desk drawers with dark floral lining beneath a natural timber desktop."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Little details</small><span class="gallery-photo-title">Beauty in the details</span></span><span class="gallery-number" aria-hidden="true">11</span></span>
+            </a>
+          </li>
+          <li class="gallery-card" data-gallery-extra>
+            <a href="/assets/gallery/floral-drawer-detail-1400.webp" data-gallery-item data-caption="The finishing touch" aria-label="Open photograph: The finishing touch">
+              <span class="gallery-photo"><img src="/assets/gallery/floral-drawer-detail-600.webp" width="600" height="424" loading="lazy" decoding="async" alt="Close-up of pale flowers and birds patterned on dark drawer lining, with the timber drawer edge visible."><span class="gallery-photo-open" aria-hidden="true">↗</span></span>
+              <span class="gallery-caption"><span><small>Little details</small><span class="gallery-photo-title">The finishing touch</span></span><span class="gallery-number" aria-hidden="true">12</span></span>
+            </a>
+          </li>
+        </ul>
+        <div class="gallery-actions">
+          <button class="button button-outline" id="gallery-expand" type="button" aria-controls="gallery-grid" aria-expanded="false" hidden><span id="gallery-expand-label">See all 12 photos</span><span aria-hidden="true">＋</span></button>
+          <a class="text-link" href="https://www.instagram.com/thedutchyfinch/" target="_blank" rel="noopener noreferrer">More lovely things on Instagram <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
+        </div>
+        <p class="gallery-availability">Finds, past and present. <a href="https://www.facebook.com/p/The-Dutchy-Finch-61577675420865/" target="_blank" rel="noopener noreferrer">Message us about current availability<span class="sr-only"> (opens in a new tab)</span></a>.</p>
       </div>
     </section>
 
@@ -214,5 +307,21 @@
     </div>
     <div class="section-width footer-bottom"><p>© <span data-year>2026</span> The Dutchy Finch</p><a href="/privacy/">Privacy</a><a href="https://oo.studio/" target="_blank" rel="noopener noreferrer">Site by oo.studio <span class="infinity" aria-hidden="true">∞</span><span class="sr-only"> (opens in a new tab)</span></a></div>
   </footer>
+
+  <dialog class="photo-dialog" id="photo-dialog" aria-labelledby="photo-dialog-title" aria-describedby="photo-dialog-caption">
+    <div class="photo-dialog-top"><h2 id="photo-dialog-title">A closer look.</h2><button class="photo-dialog-close" id="photo-dialog-close" type="button" aria-label="Close photograph"><span>Close</span><span aria-hidden="true">×</span></button></div>
+    <div class="photo-dialog-stage">
+      <img id="photo-dialog-image" alt="" decoding="async">
+      <p class="photo-dialog-error" hidden>This photograph couldn’t load. Try opening it with the link below.</p>
+      <span class="photo-dialog-loading" aria-hidden="true">Loading photograph…</span>
+    </div>
+    <div class="photo-dialog-bottom">
+      <button class="photo-dialog-nav" id="photo-dialog-prev" type="button" aria-label="Previous photograph">←</button>
+      <div class="photo-dialog-description"><p id="photo-dialog-caption"></p><span id="photo-dialog-count"></span></div>
+      <button class="photo-dialog-nav" id="photo-dialog-next" type="button" aria-label="Next photograph">→</button>
+    </div>
+    <a class="photo-dialog-open" id="photo-dialog-open" href="#gallery" target="_blank" rel="noopener noreferrer">Open photo in a new tab <span aria-hidden="true">↗</span></a>
+    <p class="sr-only" id="photo-dialog-status" role="status" aria-live="polite"></p>
+  </dialog>
 </body>
 </html>

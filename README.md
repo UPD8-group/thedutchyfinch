@@ -33,10 +33,12 @@ The tracked `.openai/hosting.json` identifies the corresponding review site and 
 - `public/index.html`: business copy, service descriptions, social links, location and structured data.
 - `public/styles.css`: typography, colours and responsive layout.
 - `public/main.js`: optional introduction, mobile navigation, map loading and address copying.
+- `public/gallery.js` and `public/gallery.css`: photograph grid, expand/collapse controls and the accessible full-photo viewer.
 - `public/privacy/index.html`: privacy note reflecting this implementation.
 - `public/assets/`: compressed media, fonts and brand artwork.
 - `scripts/build.mjs`: static build, canonical URLs and Content Security Policy script hashes.
 - `scripts/check.mjs`: structural, local-link, asset, JavaScript syntax and video-size checks.
+- `docs/gallery-assets.json`: supplied photo provenance, descriptions, dimensions and compression measurements.
 
 The site uses the supplied Instagram and Facebook profiles for enquiries. There is no shop checkout, enquiry form, inventory feed or invented business contact information.
 
@@ -54,6 +56,23 @@ Only one video source is selected, based on the initial screen width. The animat
 Visitors who prefer reduced motion, use a supported data-saving mode, or have already seen the introduction get the full-colour still without an automatic video download. Autoplay failures fall back to the same still. With JavaScript disabled, the full-colour page and navigation remain available.
 
 The original large video and GIF are intentionally excluded from this repository. The brand artwork and animation were supplied by the site requester for this project.
+
+## Photograph gallery
+
+All 13 supplied photographs are included: one shop photograph in the story section and 12 in the gallery. The gallery starts with six photographs and offers a “See all 12 photos” control. Without JavaScript all photographs remain visible and link directly to the larger images.
+
+The native dialog viewer supports next/previous buttons, arrow keys, swipe gestures, Escape to close and focus return. It displays each entire photograph without cropping. Larger gallery images are requested only when selected; the story image uses responsive sizes.
+
+| Photo asset set | Total bytes |
+| --- | ---: |
+| Original PNG uploads | 43,279,719 |
+| All 13 thumbnails | 518,604 |
+| All 13 larger photographs | 2,052,944 |
+| Combined web assets | 2,571,548 |
+
+The complete set is 94.1% smaller than the originals. Thumbnails have a maximum edge of 600 px; larger views have a maximum edge of 1400 px. The first six gallery thumbnails total 218,674 bytes. WebP encoding preserves the complete composition and aspect ratio, with no enlargement or generative editing. Original uploads are not included in this repository.
+
+Gallery copy presents past and present finds and directs availability enquiries to the supplied social profile.
 
 ## Content sources
 

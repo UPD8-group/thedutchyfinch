@@ -12,3 +12,9 @@
 
 /main.js
   Cache-Control: public, max-age=0, must-revalidate
+
+/gallery.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/gallery.js
+  Cache-Control: public, max-age=0, must-revalidate

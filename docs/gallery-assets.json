@@ -1,0 +1,409 @@
+{
+  "photoCount": 13,
+  "encoding": {
+    "preservedFullFrame": true,
+    "preservedAspectRatio": true,
+    "enlarged": false,
+    "metadataStripped": true,
+    "generativeEditing": false,
+    "thumbnailMaximumEdge": 600,
+    "fullMaximumEdge": 1400
+  },
+  "totals": {
+    "sourceBytes": 43279719,
+    "thumbnailBytes": 518604,
+    "fullBytes": 2052944
+  },
+  "photos": [
+    {
+      "slug": "stall-interior",
+      "title": "A little look inside",
+      "alt": "Vintage furniture, glassware and decorative pieces in The Dutchy Finch stall.",
+      "source": {
+        "filename": "image(3).png",
+        "width": 2048,
+        "height": 2048,
+        "bytes": 6272346,
+        "sha256": "9cca0b69e0a7839545e1d5aeea27c6a5acd331d61ce71e58985cf33156c22b76"
+      },
+      "thumb": {
+        "filename": "stall-interior-600.webp",
+        "src": "/assets/gallery/stall-interior-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 74094,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "stall-interior-1400.webp",
+        "src": "/assets/gallery/stall-interior-1400.webp",
+        "width": 1400,
+        "height": 1400,
+        "bytes": 289878,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "display-cabinets",
+      "title": "Treasures on display",
+      "alt": "Dark glass-fronted display cabinets beside a bronze-coloured rabbit sculpture.",
+      "source": {
+        "filename": "image(4).png",
+        "width": 2048,
+        "height": 2048,
+        "bytes": 5309411,
+        "sha256": "a5e7cb25291289b076fedb24c7ae66ac7c9ecbade1bf53ed7a87d987d063899a"
+      },
+      "thumb": {
+        "filename": "display-cabinets-600.webp",
+        "src": "/assets/gallery/display-cabinets-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 58562,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "display-cabinets-1400.webp",
+        "src": "/assets/gallery/display-cabinets-1400.webp",
+        "width": 1400,
+        "height": 1400,
+        "bytes": 221158,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "vintage-writing-corner",
+      "title": "Collected corners",
+      "alt": "A small writing table and patterned chair beneath framed flowers and a lit brass-coloured lamp.",
+      "source": {
+        "filename": "image(5).png",
+        "width": 1536,
+        "height": 2048,
+        "bytes": 4759234,
+        "sha256": "93a36a92d3831923341764b7f4239a3dee00a167ef940833836fce3a55612b19"
+      },
+      "thumb": {
+        "filename": "vintage-writing-corner-600.webp",
+        "src": "/assets/gallery/vintage-writing-corner-600.webp",
+        "width": 450,
+        "height": 600,
+        "bytes": 44526,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "vintage-writing-corner-1400.webp",
+        "src": "/assets/gallery/vintage-writing-corner-1400.webp",
+        "width": 1050,
+        "height": 1400,
+        "bytes": 182318,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "framed-portrait",
+      "title": "Art with character",
+      "alt": "A blue-toned portrait of a woman in a straw hat, in a gold-coloured frame.",
+      "source": {
+        "filename": "image(6).png",
+        "width": 1440,
+        "height": 1440,
+        "bytes": 2338778,
+        "sha256": "c00ea132f3ab03d2ad10a344d174e514f68d619d3cfce7ca7fdbba1e331593df"
+      },
+      "thumb": {
+        "filename": "framed-portrait-600.webp",
+        "src": "/assets/gallery/framed-portrait-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 36794,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "framed-portrait-1400.webp",
+        "src": "/assets/gallery/framed-portrait-1400.webp",
+        "width": 1400,
+        "height": 1400,
+        "bytes": 159020,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "leopard-print-boots",
+      "title": "A little wild at heart",
+      "alt": "A pair of leopard-print heeled ankle boots on display.",
+      "source": {
+        "filename": "image(7).png",
+        "width": 1440,
+        "height": 1440,
+        "bytes": 2951488,
+        "sha256": "a67a0a1f2927df45342dc0fed7a0aba2a51182f2a09fd782af17d81945cc939e"
+      },
+      "thumb": {
+        "filename": "leopard-print-boots-600.webp",
+        "src": "/assets/gallery/leopard-print-boots-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 53812,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "leopard-print-boots-1400.webp",
+        "src": "/assets/gallery/leopard-print-boots-1400.webp",
+        "width": 1400,
+        "height": 1400,
+        "bytes": 212698,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "dining-room-display",
+      "title": "Gathered around the table",
+      "alt": "A timber dining table set with glassware and pink napkins, surrounded by antique cabinets.",
+      "source": {
+        "filename": "image(8).png",
+        "width": 1440,
+        "height": 1440,
+        "bytes": 3427227,
+        "sha256": "06119e77bd97db22795905763d12ea1331dee1a63e4a7ff975a14e73b1422e1b"
+      },
+      "thumb": {
+        "filename": "dining-room-display-600.webp",
+        "src": "/assets/gallery/dining-room-display-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 67642,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "dining-room-display-1400.webp",
+        "src": "/assets/gallery/dining-room-display-1400.webp",
+        "width": 1400,
+        "height": 1400,
+        "bytes": 246678,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "yellow-flower-wall-vase",
+      "title": "Flowers in a frame",
+      "alt": "Yellow flowers in a round glass wall vase inside an ornate gold-coloured frame.",
+      "source": {
+        "filename": "image(9).png",
+        "width": 1440,
+        "height": 1440,
+        "bytes": 2925071,
+        "sha256": "2f47ecb054fc41c5ac9e1ae534eb6ef5b976b4c80c692918116cce4e923c90a2"
+      },
+      "thumb": {
+        "filename": "yellow-flower-wall-vase-600.webp",
+        "src": "/assets/gallery/yellow-flower-wall-vase-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 43578,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "yellow-flower-wall-vase-1400.webp",
+        "src": "/assets/gallery/yellow-flower-wall-vase-1400.webp",
+        "width": 1400,
+        "height": 1400,
+        "bytes": 170904,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "red-flower-wall-vase",
+      "title": "Something unexpected",
+      "alt": "Red and white flowers in a glass wall vase mounted within a gold-coloured frame.",
+      "source": {
+        "filename": "image(10).png",
+        "width": 1440,
+        "height": 1440,
+        "bytes": 1659066,
+        "sha256": "ee0baaac8d200e5b4bd88993e97ac021fdfdc5e52281b79de8fee943cc585dcb"
+      },
+      "thumb": {
+        "filename": "red-flower-wall-vase-600.webp",
+        "src": "/assets/gallery/red-flower-wall-vase-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 20278,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "red-flower-wall-vase-1400.webp",
+        "src": "/assets/gallery/red-flower-wall-vase-1400.webp",
+        "width": 1400,
+        "height": 1400,
+        "bytes": 78366,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "nesting-tables",
+      "title": "Old pieces, fresh possibilities",
+      "alt": "Three grey nesting tables with natural timber tops, styled beside green plants.",
+      "source": {
+        "filename": "image(20261011-024417).png",
+        "width": 1905,
+        "height": 2048,
+        "bytes": 2938429,
+        "sha256": "69d09e1ebe52f4c010fdb86ed27cf35542d0a774453a1f697014e9309fdf6674"
+      },
+      "thumb": {
+        "filename": "nesting-tables-600.webp",
+        "src": "/assets/gallery/nesting-tables-600.webp",
+        "width": 558,
+        "height": 600,
+        "bytes": 24484,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "nesting-tables-1400.webp",
+        "src": "/assets/gallery/nesting-tables-1400.webp",
+        "width": 1302,
+        "height": 1400,
+        "bytes": 86004,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "floral-lined-drawers",
+      "title": "Beauty in the details",
+      "alt": "Open desk drawers with dark floral lining beneath a natural timber desktop.",
+      "source": {
+        "filename": "image(20261011-024426).png",
+        "width": 1813,
+        "height": 2048,
+        "bytes": 2604691,
+        "sha256": "373f4b545b7d256e94ac6ff3b0e8cf10d9f083074fe763cee28d59230ccb184e"
+      },
+      "thumb": {
+        "filename": "floral-lined-drawers-600.webp",
+        "src": "/assets/gallery/floral-lined-drawers-600.webp",
+        "width": 531,
+        "height": 600,
+        "bytes": 18992,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "floral-lined-drawers-1400.webp",
+        "src": "/assets/gallery/floral-lined-drawers-1400.webp",
+        "width": 1239,
+        "height": 1400,
+        "bytes": 63324,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "dark-chest-of-drawers",
+      "title": "A new chapter",
+      "alt": "A dark chest of drawers with brass-coloured handles, a table lamp, flowers and framed art.",
+      "source": {
+        "filename": "image(20261011-024435).png",
+        "width": 1985,
+        "height": 2048,
+        "bytes": 1862450,
+        "sha256": "e2c131ab607643341b854f26cc9103d2c1ce75584b55b99e5c40879af4c404c2"
+      },
+      "thumb": {
+        "filename": "dark-chest-of-drawers-600.webp",
+        "src": "/assets/gallery/dark-chest-of-drawers-600.webp",
+        "width": 582,
+        "height": 600,
+        "bytes": 12452,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "dark-chest-of-drawers-1400.webp",
+        "src": "/assets/gallery/dark-chest-of-drawers-1400.webp",
+        "width": 1357,
+        "height": 1400,
+        "bytes": 50900,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "writing-desk",
+      "title": "Made to be loved again",
+      "alt": "A dark writing desk with a natural timber top, curved legs and brass-coloured handles.",
+      "source": {
+        "filename": "image(20261011-024448).png",
+        "width": 2048,
+        "height": 1941,
+        "bytes": 3146108,
+        "sha256": "3fde92f3b65b424fe0c80e57ce313f82b3f25f0cb47ebfb19e6159e71e58741e"
+      },
+      "thumb": {
+        "filename": "writing-desk-600.webp",
+        "src": "/assets/gallery/writing-desk-600.webp",
+        "width": 600,
+        "height": 569,
+        "bytes": 25992,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "writing-desk-1400.webp",
+        "src": "/assets/gallery/writing-desk-1400.webp",
+        "width": 1400,
+        "height": 1327,
+        "bytes": 163142,
+        "quality": 84,
+        "format": "WebP"
+      }
+    },
+    {
+      "slug": "floral-drawer-detail",
+      "title": "The finishing touch",
+      "alt": "Close-up of pale flowers and birds patterned on dark drawer lining, with the timber drawer edge visible.",
+      "source": {
+        "filename": "image(20261011-024504).png",
+        "width": 2048,
+        "height": 1448,
+        "bytes": 3085420,
+        "sha256": "a2ce935107d3f9d2d69a9e7b15ccdd91f88411c39a2633202c73f877ffe7aa4e"
+      },
+      "thumb": {
+        "filename": "floral-drawer-detail-600.webp",
+        "src": "/assets/gallery/floral-drawer-detail-600.webp",
+        "width": 600,
+        "height": 424,
+        "bytes": 37398,
+        "quality": 82,
+        "format": "WebP"
+      },
+      "full": {
+        "filename": "floral-drawer-detail-1400.webp",
+        "src": "/assets/gallery/floral-drawer-detail-1400.webp",
+        "width": 1400,
+        "height": 990,
+        "bytes": 128554,
+        "quality": 84,
+        "format": "WebP"
+      }
+    }
+  ]
+}
