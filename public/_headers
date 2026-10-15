@@ -19,6 +19,12 @@
 /gallery.js
   Cache-Control: public, max-age=0, must-revalidate
 
+/shop.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/checkout.js
+  Cache-Control: public, max-age=0, must-revalidate
+
 /demo/dutchyfinch/*
   X-Robots-Tag: noindex
 
@@ -35,4 +41,10 @@
   Cache-Control: public, max-age=0, must-revalidate
 
 /demo/dutchyfinch/gallery.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/demo/dutchyfinch/shop.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/demo/dutchyfinch/checkout.js
   Cache-Control: public, max-age=0, must-revalidate

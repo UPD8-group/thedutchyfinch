@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#334738">
+  <meta name="robots" content="noindex">
+  <title>Field kit · Checkout demo — The Dutchy Finch</title>
+  <meta name="description" content="Preview a one-time purchase of The Curated Eye: Antiquarian Field Kit. A client demonstration; no payment is taken.">
+  <link rel="icon" href="/assets/finch-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/shop.css">
+  <script src="/checkout.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header checkout-header">
+    <div class="header-inner">
+      <a class="wordmark" href="/" aria-label="The Dutchy Finch, home"><span class="wordmark-small">THE</span><span>Dutchy Finch<span class="wordmark-dot">.</span></span></a>
+      <a class="text-link" href="/#field-kit"><span aria-hidden="true">←</span> Back to the kit</a>
+    </div>
+  </header>
+  <main class="checkout-page section-width" id="main">
+    <div class="demo-banner"><strong>CLIENT DEMONSTRATION</strong><span>A preview of a Square purchase. No payment will be taken and no order will be placed.</span></div>
+    <div class="checkout-layout">
+      <div class="checkout-preview">
+        <p class="eyebrow">A CLOSER LOOK AT YOUR NEXT FIND</p>
+        <h1>A kit for<br><em>the curious eye.</em></h1>
+        <img src="/assets/curated-eye-800.webp" width="800" height="450" alt="The Curated Eye field kit, with precision tools arranged inside a forest-green linen presentation box.">
+        <p>History leaves footprints; this kit helps you find them. Trust your instinct. Verify with your tools.</p>
+      </div>
+      <section class="checkout-summary" aria-labelledby="order-title">
+        <h2 id="order-title">Your field kit.</h2>
+        <div class="checkout-item">
+          <h3>The Curated Eye:<br><em>Antiquarian Field Kit</em></h3>
+          <p>Quantity: 1 · One-time purchase</p>
+        </div>
+        <dl class="checkout-totals">
+          <div><dt>Price</dt><dd>To be confirmed</dd></div>
+          <div><dt>Delivery or collection</dt><dd>To be confirmed</dd></div>
+          <div class="checkout-total"><dt>Due today in this demo</dt><dd>No charge</dd></div>
+        </dl>
+        <p class="checkout-explanation" id="checkout-explanation">Try the final step below. The live BUY button can open Square checkout once the price and purchase link are ready.</p>
+        <button class="button button-dark checkout-demo-button" id="complete-demo" type="button" aria-describedby="checkout-explanation" aria-controls="demo-result" hidden>Complete demo purchase <span aria-hidden="true">↗</span></button>
+        <noscript><p class="checkout-explanation">Enable JavaScript to try the final demo step. This preview never takes a payment or places an order.</p></noscript>
+        <div class="checkout-success" id="demo-result" role="status" aria-live="polite" aria-atomic="true" hidden>
+          <h3 id="demo-result-title" tabindex="-1">Demo complete.</h3>
+          <p>That’s how a single-item purchase could finish. No payment was taken, no order was placed and no personal details were collected.</p>
+          <a class="button button-outline" href="/#field-kit">Back to The Curated Eye <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="square-label"><svg class="square-mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg><span>Square checkout<small>Illustrative preview · no live connection</small></span></div>
+      </section>
+    </div>
+  </main>
+  <footer class="checkout-footer section-width"><p>The Dutchy Finch · Antiques with soul. <a href="/privacy/">Privacy</a></p></footer>
+</body>
+</html>
