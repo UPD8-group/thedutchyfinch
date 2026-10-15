@@ -28,8 +28,14 @@ for (const file of files.filter((item) => item.endsWith('.html'))) {
     if (reference.startsWith('#')) {
       assert(ids.includes(reference.slice(1)), `Missing anchor ${reference} in ${file}`);
     } else if (reference.startsWith('/')) {
-      const target = path.join(root, reference.endsWith('/') ? `${reference}index.html` : reference);
+      const { pathname, hash } = new URL(reference, 'https://local.test');
+      const target = path.join(root, pathname.endsWith('/') ? `${pathname}index.html` : pathname);
       assert(files.includes(target), `Missing local resource ${reference} in ${file}`);
+      if (hash) {
+        const destination = await readFile(target, 'utf8');
+        const destinationIds = [...destination.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+        assert(destinationIds.includes(decodeURIComponent(hash.slice(1))), `Missing destination anchor ${reference} in ${file}`);
+      }
     }
   }
   for (const match of html.matchAll(/<a\b[^>]*target="_blank"[^>]*>/g)) {

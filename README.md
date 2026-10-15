@@ -42,6 +42,7 @@ Every build runs `scripts/check-build.mjs` to validate both versions' local reso
 - `public/styles.css`: typography, colours and responsive layout.
 - `public/main.js`: optional introduction, mobile navigation, map loading and address copying.
 - `public/gallery.js` and `public/gallery.css`: photograph grid, expand/collapse controls and the accessible full-photo viewer.
+- `public/shop.css`, `public/checkout/index.html` and `public/checkout.js`: featured field kit styling and the local single-item checkout demonstration.
 - `public/privacy/index.html`: privacy note reflecting this implementation.
 - `public/assets/`: compressed media, fonts and brand artwork.
 - `scripts/build.mjs`: static build, branded demo output, canonical URLs and Content Security Policy script hashes.
@@ -50,7 +51,15 @@ Every build runs `scripts/check-build.mjs` to validate both versions' local reso
 - `scripts/test-intro.mjs`: animation startup, loading fallback, controls and visibility regression checks, included in `npm run check`.
 - `docs/gallery-assets.json`: supplied photo provenance, descriptions, dimensions and compression measurements.
 
-The site uses the supplied email address (hello@thedutchyfinch.com.au), Instagram and Facebook profiles for enquiries. There is no shop checkout, enquiry form, inventory feed or invented business contact information.
+The site uses the supplied email address (hello@thedutchyfinch.com.au), Instagram and Facebook profiles for enquiries. There is no live payment connection, enquiry form, inventory feed or invented business contact information.
+
+## The Curated Eye field kit
+
+The homepage features **The Curated Eye: Antiquarian Field Kit**, using the requester's exact description and supplied product image. Two WebP sizes preserve the full composition. The Field kit navigation link leads to the product; BUY opens `/checkout/` (or `/demo/dutchyfinch/checkout/` in the oo.studio demo).
+
+The checkout is a clearly labelled, local Square purchase illustration for one kit as a one-time purchase. The price and delivery arrangements are marked as awaiting confirmation. “Complete demo purchase” reveals a demo completion message and never collects personal details, calls Square, takes a payment or creates an order. Without JavaScript the order preview and return links still work.
+
+To enable real purchases later, confirm the price and fulfilment arrangements, replace the homepage BUY link with the merchant's Square payment link, and update its accompanying demo labels. No Square credentials or shop integration are required for this example.
 
 ## The finch animation
 
